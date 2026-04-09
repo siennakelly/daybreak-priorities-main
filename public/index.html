@@ -7,15 +7,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --bg: #ffffff;
-    --bg2: #f7f7f5;
-    --bg3: #f0efe9;
-    --text: #1a1a18;
-    --text2: #6b6b67;
-    --text3: #9b9b96;
-    --border: rgba(0,0,0,0.10);
-    --border2: rgba(0,0,0,0.18);
-    --border3: rgba(0,0,0,0.28);
+    --bg: #DDE4ED;
+    --bg2: #F6ECE1;
+    --bg3: #ede4d8;
+    --text: #221D35;
+    --text2: #5a5470;
+    --text3: #9b96b0;
+    --border: rgba(34,29,53,0.12);
+    --border2: rgba(34,29,53,0.20);
+    --border3: rgba(34,29,53,0.32);
     --blue-bg: #e6f1fb;
     --blue-text: #0c447c;
     --blue-border: #85b7eb;
@@ -27,7 +27,7 @@
     --red-border: #f09595;
     --amber-bg: #faeeda;
     --amber-text: #633806;
-    --amber-border: #ef9f27;
+    --amber-border: #FECF00;
     --radius: 8px;
     --radius-lg: 12px;
     --font: -apple-system, 'Helvetica Neue', Arial, sans-serif;
@@ -108,11 +108,11 @@
 
   /* CARDS */
   .list { display: flex; flex-direction: column; gap: 8px; }
-  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color .15s; }
+  .card { background: #F6ECE1; border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color .15s; }
   .card:hover { border-color: var(--border2); }
   .card.exp { border-color: var(--border3); }
-  .card-main { display: flex; align-items: flex-start; cursor: pointer; }
-  .rank { width: 34px; min-width: 34px; display: flex; align-items: center; justify-content: center; padding-top: 15px; font-size: 11px; color: var(--text3); font-weight: 500; }
+  .card-main { display: flex; align-items: center; cursor: pointer; }
+  .rank { width: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text3); font-weight: 600; align-self: stretch; }
   .rank.top { color: var(--amber-text); }
   .vote-col { display: flex; flex-direction: column; align-items: center; padding: 10px; gap: 1px; border-right: 0.5px solid var(--border); min-width: 42px; }
   .vbtn { background: none; border: none; cursor: pointer; font-size: 13px; padding: 3px 4px; border-radius: 4px; color: var(--text3); line-height: 1; }
@@ -132,7 +132,10 @@
   .badge-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
   .badge-red { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
   .badge-amber { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
-  .cmeta { display: flex; gap: 14px; font-size: 12px; color: var(--text2); flex-wrap: wrap; margin-top: 2px; }
+  .cmeta { display: flex; gap: 8px; font-size: 12px; color: var(--text2); flex-wrap: wrap; margin-top: 6px; align-items: center; justify-content: flex-start; }
+  .dim-pill { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 5px 10px; min-width: 64px; }
+  .dim-pill-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+  .dim-pill-val { font-size: 15px; font-weight: 600; color: var(--text); }
   .exp-btn { background: none; border: none; cursor: pointer; padding: 8px 12px; color: var(--text3); font-size: 12px; align-self: center; flex-shrink: 0; white-space: nowrap; font-family: var(--font); }
   .exp-btn:hover { color: var(--text); }
   .detail { border-top: 0.5px solid var(--border); padding: 12px 13px 14px; display: none; }
@@ -476,10 +479,10 @@
         </div>
       </div>
       <select id="sort-f" onchange="render()">
-        <option value="combined">Sort: community rank</option>
-        <option value="score">Sort: formula score</option>
-        <option value="revenue">Sort: revenue impact</option>
-        <option value="votes">Sort: team votes</option>
+        <option value="score">Sort: Formula Score</option>
+        <option value="revenue">Sort: Revenue Impact</option>
+        <option value="votes">Sort: Team Votes</option>
+        <option value="phase">Sort: Phase</option>
       </select>
       <select id="req-f" onchange="render()">
         <option value="">All requestors</option>
@@ -503,13 +506,7 @@
       <div class="weight-total" id="weight-total"></div>
       <button class="btn" style="margin-top:10px;font-size:12px" onclick="addDimension()">+ Add dimension</button>
     </div>
-    <div class="settings-section">
-      <h4>Vote influence</h4>
-      <div class="vote-mult-row">
-        <input type="number" id="vote-mult-input" min="0" max="100" step="1" value="8" />
-        <span>score points added per net vote</span>
-      </div>
-    </div>
+
     <div class="settings-btns">
       <button class="btn" onclick="closeSettings()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSettings()">Save &amp; apply</button>
@@ -588,7 +585,7 @@
         <option value="initiative_created">New initiatives</option>
         <option value="initiative_updated">Edits</option>
         <option value="flag">Flags</option>
-        <option value="login">Logins</option>
+
       </select>
       <select id="cl-user" onchange="renderChangelog()">
         <option value="">All users</option>
@@ -785,7 +782,7 @@ const DEFAULT_DIMS=[
   {id:'importance',label:'Importance',weight:25},
   {id:'urgency',label:'Urgency',weight:27},
 ];
-let scoringConfig={dims:DEFAULT_DIMS.map(d=>({...d})),voteMult:8};
+let scoringConfig={dims:DEFAULT_DIMS.map(d=>({...d})),voteMult:0};
 
 async function loadScoringConfig(){
   try{
@@ -822,7 +819,7 @@ function who() { return (document.getElementById('who-input')||{}).value?.trim()
 function calcScore(e,v,i,u){return Math.round(((e/5)*20+(v/5)*28+(i/5)*25+(u/5)*27)*10)/10;}
 function netVote(key) { const v=votes[key]||{}; return Object.values(v).reduce((s,x)=>s+x,0); }
 function userVote(key) { const v=votes[key]||{}; return v[who()]||0; }
-function combined(key){const item=items.find(i=>i.key===key);if(!item)return 0;return item.score+(netVote(key)*(scoringConfig.voteMult||8));}
+function combined(key){const item=items.find(i=>i.key===key);if(!item)return 0;return item.score;}
 function timeAgo(ts) {
   const d=Date.now()-new Date(ts).getTime();
   if(d<60000)return'just now'; if(d<3600000)return Math.floor(d/60000)+'m ago';
@@ -860,8 +857,7 @@ async function init(url,key,name) {
     document.getElementById('who-input').value=name;
     await loadAll();
     subscribeRealtime();
-    // Log login
-    setTimeout(()=>logActivity('login', null, null), 1000);
+
   } catch(e) {
     if(btn){btn.textContent='Connect and open board';btn.disabled=false;}
     err.style.display='block';
@@ -909,10 +905,12 @@ function getFiltered() {
     const mt=activeTagFilters.size===0||((()=>{const t=i.tags?JSON.parse(i.tags||'[]'):[];return [...activeTagFilters].every(f=>t.includes(f));})());
     return ms&&mf&&mt&&(!rq||i.requestor===rq);
   });
+  const PHASE_ORDER=['Ready for Release','Testing','Development','Product Scoping','Requirements Ready, Not Started','Requirements Not Ready','Blocked by Stakeholder'];
   list.sort((a,b)=>{
     if(so==='score')return b.score-a.score;
     if(so==='revenue')return b.revenue-a.revenue;
     if(so==='votes')return netVote(b.key)-netVote(a.key);
+    if(so==='phase'){const ai=PHASE_ORDER.indexOf(a.phase);const bi=PHASE_ORDER.indexOf(b.phase);return (ai===-1?99:ai)-(bi===-1?99:bi);}
     return combined(b.key)-combined(a.key);
   });
   return list;
@@ -1140,9 +1138,11 @@ function render() {
             </div>
           </div>
           <div class="cmeta">
-            <span>${item.requestor}</span><span>Effort ${item.effort}/5</span>
-            <span>Value ${item.value}/5</span><span>Importance ${item.importance}/5</span><span>Urgency ${item.urgency}/5</span>
-            ${ccount?`<span>${ccount} comment${ccount!==1?'s':''}</span>`:''}
+            <div class="dim-pill"><div class="dim-pill-lbl">Effort</div><div class="dim-pill-val">${item.effort}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Value</div><div class="dim-pill-val">${item.value}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Importance</div><div class="dim-pill-val">${item.importance}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Urgency</div><div class="dim-pill-val">${item.urgency}/5</div></div>
+            ${ccount?`<span style="margin-left:4px">${ccount} comment${ccount!==1?'s':''}</span>`:''}
           </div>
         </div>
         <button class="flag-btn" style="align-self:center;margin-right:4px;padding:4px 8px" onclick="toggleFlag(''+item.key+'',event)" title="${flagged.has(item.key)?'Remove flag':'Flag for sync'}">${flagged.has(item.key)?'★':'☆'}</button><button class="exp-btn">${isExp?'Collapse ▲':'Details ▼'}</button>
@@ -1233,7 +1233,7 @@ function renderModalDims(){
 }
 function openSettings(){
   renderSettingsDims();
-  document.getElementById('vote-mult-input').value=scoringConfig.voteMult||8;
+
   document.getElementById('settings-overlay').classList.add('open');
 }
 function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
@@ -1253,7 +1253,7 @@ function updateWeightTotal(){
 async function saveSettings(){
   const t=scoringConfig.dims.reduce((s,d)=>s+(+d.weight||0),0);
   if(t!==100){alert('Weights must add up to 100%. Current total: '+t+'%');return;}
-  scoringConfig.voteMult=+(document.getElementById('vote-mult-input').value)||8;
+  scoringConfig.voteMult=0;
   await saveScoringConfig();
   const msg=document.getElementById('save-msg');
   msg.style.display='block';
@@ -1412,6 +1412,7 @@ function getClFiltered(){
   const to=document.getElementById('cl-to').value;
 
   return clLog.filter(e=>{
+    if(e.type==='login') return false;
     const eu=(e.user_name||e.user||'').toLowerCase();
     if(s && !(eu.includes(s)||(e.initiative_key||'').toLowerCase().includes(s)||(e.detail||'').toLowerCase().includes(s))) return false;
     if(type){
@@ -1695,7 +1696,8 @@ function renderRoadmap() {
       html+=`<td class="label-cell" style="width:200px;min-width:200px;max-width:200px;cursor:pointer;border-right:0.5px solid var(--border2);position:sticky;left:0;background:var(--bg);z-index:1" onclick="closeRoadmap();setTimeout(()=>toggleExpand('${item.key}'),50)" title="${item.title}">`;
       html+=`<span style="font-size:10px;color:var(--blue-text);font-family:monospace;margin-right:4px">${item.key}</span>`;
       html+=`<span style="font-size:12px">${item.title.slice(0,26)}${item.title.length>26?'…':''}</span>`;
-      if(isFlagged) html+=` <span style="color:var(--amber-text);font-size:10px">★</span>`;
+      if(isFlagged) html+=` <span style="color:var(--amber-text);font-size:10px;cursor:pointer" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="Remove flag">★</span>`;
+      else html+=` <span style="color:var(--text3);font-size:10px;cursor:pointer" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="Flag for sync">☆</span>`;
       html+=`</td>`;
 
       for(let w=1;w<=52;w++){
@@ -1738,7 +1740,7 @@ function renderRoadmap() {
           <span class="rm-chip" onclick="closeRoadmap();setTimeout(()=>toggleExpand('${i.key}'),50)" title="${i.title}">
             <span style="font-size:10px;color:var(--blue-text);font-family:monospace">${i.key}</span>
             ${i.title.slice(0,28)}${i.title.length>28?'…':''}
-            ${flagged.has(i.key)?'<span style="color:var(--amber-text)">★</span>':''}
+            ${flagged.has(i.key)?`<span style="color:var(--amber-text);cursor:pointer" onclick="event.stopPropagation();toggleFlag('${i.key}',event)" title="Remove flag">★</span>`:`<span style="color:var(--text3);cursor:pointer" onclick="event.stopPropagation();toggleFlag('${i.key}',event)" title="Flag for sync">☆</span>`}
           </span>`).join('')}
       </div>`;
   } else {
