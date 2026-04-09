@@ -1144,14 +1144,7 @@ function render() {
           <button class="vbtn${uv===-1?' dn':''}" onclick="vote('${item.key}',-1,event)">▼</button>
         </div>
         <div class="cbody">
-          <div class="ctop">
-            <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
-            <div class="badges">
-              ${item.is_new?'<span class="badge badge-amber">New</span>':''}${flagged.has(item.key)?'<span class="badge badge-flag">For sync</span>':''}
-              ${pc?`<span class="badge badge-${pc}">${item.phase}</span>`:`<span class="badge badge-slate">${item.phase}</span>`}
-              <span class="badge" style="background:var(--text);color:var(--bg);border-color:var(--text)">Score ${cs}</span>
-            </div>
-          </div>
+          <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
           <div class="cmeta">
             <div class="dim-pill"><div class="dim-pill-lbl">Effort</div><div class="dim-pill-val">${item.effort}/5</div></div>
             <div class="dim-pill"><div class="dim-pill-lbl">Value</div><div class="dim-pill-val">${item.value}/5</div></div>
@@ -1160,9 +1153,10 @@ function render() {
             ${ccount?`<span style="margin-left:4px">${ccount} comment${ccount!==1?'s':''}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:10px 12px 10px 8px;gap:8px;align-self:stretch;flex-shrink:0">
-          <button class="flag-btn" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="${flagged.has(item.key)?'Remove flag':'Flag for sync'}">${flagged.has(item.key)?'★':'☆'}</button>
-          <button class="exp-btn" style="color:var(--text2);font-weight:600;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 12px;background:var(--bg)">${isExp?'Collapse ▲':'Details ▼'}</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:12px 14px;gap:10px;align-self:stretch;flex-shrink:0;border-left:0.5px solid var(--border);min-width:170px">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">${item.is_new?'<span class="badge badge-amber">New</span>':''}${flagged.has(item.key)?'<span class="badge badge-flag">For sync</span>':''}${pc?`<span class="badge badge-${pc}">${item.phase}</span>`:`<span class="badge badge-slate">${item.phase}</span>`}<span class="badge" style="background:var(--text);color:var(--bg);border-color:var(--text)">Score ${cs}</span></div>
+          <div style="display:flex;gap:8px;align-items:center"><button class="flag-btn" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="${flagged.has(item.key)?'Remove flag':'Flag for sync'}">${flagged.has(item.key)?'★':'☆'}</button>
+          <button class="exp-btn" style="color:var(--text2);font-weight:600;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 14px;background:var(--bg)">${isExp?'Collapse ▲':'Details ▼'}</button></div>
         </div>
       </div>
       ${isExp?`<div class="detail">
