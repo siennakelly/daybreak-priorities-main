@@ -976,12 +976,13 @@ function populateRequestorFilter() {
 async function vote(key,dir,e) {
   e.stopPropagation();
   const uv=userVote(key);
-  const newVal=uv===dir?0:dir;
+  // If already voted in any direction, clicking either arrow removes the vote
+  // Only sets a new vote if currently at 0
+  const newVal=uv!==0?0:dir;
   const name=who();
   if(!name){alert('Enter your name above before voting.');return;}
   await db.from('votes').upsert({initiative_key:key,user_name:name,value:newVal},{onConflict:'initiative_key,user_name'});
   if(!votes[key])votes[key]={};votes[key][name]=newVal;
-  // Log correctly: if newVal is 0, it's a removal regardless of direction
   const logType = newVal===0 ? 'vote_removed' : newVal===1 ? 'vote' : 'vote_down';
   logActivity(logType,key,null);
   render();
