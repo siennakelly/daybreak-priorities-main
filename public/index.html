@@ -627,6 +627,13 @@
       </div>
       <button class="completed-exit" onclick="closeCompleted()">← Back to board</button>
     </div>
+    <div style="margin-bottom:1rem">
+      <select id="completed-sort" onchange="renderCompleted()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font)">
+        <option value="newest">Sort: Newest First</option>
+        <option value="oldest">Sort: Oldest First</option>
+        <option value="score">Sort: Formula Score</option>
+      </select>
+    </div>
     <div class="list" id="completed-list"><div class="loading">Loading...</div></div>
   </div>
 </div>
@@ -1063,8 +1070,13 @@ async function saveInitiative() {
   const urgency=dimVals.urgency||3;
   const score=scoringConfig.dims.reduce((s,d)=>s+(((dimVals[d.id]||3)/5)*d.weight),0);
   const revenue=parseInt(document.getElementById('f-rev').value)||0;
-  const notes=document.getElementById('f-notes').value.trim();
+  const rawNotes=document.getElementById('f-notes').value.trim();
   const phase=document.getElementById('f-phase').value;
+  // Stamp completed date if transitioning to Completed
+  const existingItem=editKey?items.find(i=>i.key===editKey):null;
+  const wasCompleted=existingItem&&existingItem.phase==='Completed';
+  const completedStamp=phase==='Completed'&&!wasCompleted?`[completed:${new Date().toISOString()}] `:'';
+  const notes=(phase==='Completed'&&!wasCompleted)?completedStamp+rawNotes.replace(/^\[completed:[^\]]+\]\s*/,''):rawNotes;
   const swEl=document.getElementById('f-start-week');const startWeek=swEl&&swEl.value?swEl.value:null;
   const durEl=document.getElementById('f-duration');const durationWeeks=durEl&&durEl.value?parseInt(durEl.value)||null:null;
   const tags=JSON.stringify(getModalTags());
@@ -1618,6 +1630,17 @@ function openRoadmap() {
   document.getElementById('roadmap-mode').classList.add('active');
 }
 
+
+function getCompletedDate(item) {
+  const m = (item.notes||'').match(/\[completed:([^\]]+)\]/);
+  if (!m) return null;
+  return new Date(m[1]);
+}
+function fmtCompletedDate(item) {
+  const d = getCompletedDate(item);
+  if (!d) return null;
+  return d.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+}
 function openCompleted() {
   document.getElementById('completed-mode').classList.add('active');
   renderCompleted();
@@ -1627,27 +1650,37 @@ function closeCompleted() {
 }
 
 function renderCompleted() {
-  const completed = items.filter(i => i.phase === 'Completed');
+  const sortEl = document.getElementById('completed-sort');
+  const sortVal = sortEl ? sortEl.value : 'newest';
+  let completed = items.filter(i => i.phase === 'Completed');
+  completed.sort((a,b) => {
+    const da = getCompletedDate(a), db2 = getCompletedDate(b);
+    if (sortVal === 'newest') return (db2||0) - (da||0);
+    if (sortVal === 'oldest') return (da||0) - (db2||0);
+    if (sortVal === 'score') return b.score - a.score;
+    return 0;
+  });
   const el = document.getElementById('completed-list');
   if (!completed.length) {
     el.innerHTML = '<div class="empty">No completed initiatives yet.</div>';
     return;
   }
   el.innerHTML = completed.map((item, idx) => {
-    const pc = 'green';
     const cs = Math.round(item.score);
+    const nv = netVote(item.key);
     const cmts = comments[item.key] || [];
     const ccount = cmts.reduce((s,c) => s + 1 + (c.replies ? c.replies.length : 0), 0);
-    return `<div class="card" id="completed-card-${item.key}" style="margin-bottom:8px">
+    const completedDateStr = fmtCompletedDate(item);
+    return `<div class="card" style="margin-bottom:8px">
       <div class="card-main" style="pointer-events:none">
         <div class="rank">${idx+1}</div>
-        <div class="vote-col">
-          <button class="vbtn" disabled style="opacity:0.3">▲</button>
-          <span class="vscore">${item.score > 0 ? '+' : ''}0</span>
-          <button class="vbtn" disabled style="opacity:0.3">▼</button>
+        <div class="vote-col" style="justify-content:center">
+          <span style="font-size:11px;color:var(--text3);margin-bottom:2px">votes</span>
+          <span class="vscore${nv>0?' pos':nv<0?' neg':''}" style="font-size:16px;font-weight:600">${nv>0?'+'+nv:nv}</span>
         </div>
         <div class="cbody">
           <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
+          ${completedDateStr ? `<div style="font-size:11px;color:var(--text3);margin-top:3px;margin-bottom:4px">✓ Completed ${completedDateStr}</div>` : ''}
           <div class="cmeta">
             <div class="dim-pill"><div class="dim-pill-lbl">Effort</div><div class="dim-pill-val">${item.effort}/5</div></div>
             <div class="dim-pill"><div class="dim-pill-lbl">Value</div><div class="dim-pill-val">${item.value}/5</div></div>
