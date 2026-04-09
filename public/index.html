@@ -104,7 +104,7 @@
 
   /* STATS */
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
-  .stat { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; }
+  .stat { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .stat-val { font-size: 22px; font-weight: 500; }
 
@@ -434,10 +434,10 @@
         <h1>Daybreak Product Roadmap</h1>
       </div>
       <div class="hdr-right">
-        <button class="btn btn-pres" onclick="openPres()">Presentation mode</button>
         <button class="btn" onclick="openRoadmap()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)">2026 Roadmap</button>
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
         <button class="btn" onclick="openChangelog()">Change Log</button>
+        <button class="btn" onclick="openCompleted()">Completed</button>
         <button class="btn" onclick="openSettings()">Settings</button>
 
       </div>
@@ -531,6 +531,7 @@
           <option>Ready for Release</option><option>Testing</option><option>Development</option>
           <option>Product Scoping</option><option>Requirements Ready, Not Started</option>
           <option>Requirements Not Ready</option><option>Blocked by Stakeholder</option>
+          <option>Completed</option>
         </select>
       </div>
       <div class="fg"><label>Revenue impact ($/mo)</label><input id="f-rev" type="number" placeholder="0" /></div>
@@ -605,6 +606,20 @@
       <button class="btn" onclick="clearClFilters()" style="font-size:12px">Clear</button>
     </div>
     <div id="cl-timeline"></div>
+  </div>
+</div>
+
+
+<div id="completed-mode">
+  <div class="completed-wrap">
+    <div class="completed-hdr">
+      <div>
+        <h1>Completed Initiatives</h1>
+        <div class="sub">Locked initiatives — scores and data preserved at time of completion</div>
+      </div>
+      <button class="completed-exit" onclick="closeCompleted()">← Back to board</button>
+    </div>
+    <div class="list" id="completed-list"><div class="loading">Loading...</div></div>
   </div>
 </div>
 
@@ -710,12 +725,8 @@ const ALL_TAGS = [
   {label:"Revenue driving",     color:"#27500a", bg:"#eaf3de", border:"#97c459"},
   {label:"Cost reduction",      color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
   {label:"Risk mitigation",     color:"#791f1f", bg:"#fcebeb", border:"#f09595"},
-  {label:"Customer experience", color:"#633806", bg:"#faeeda", border:"#ef9f27"},
   {label:"Operational efficiency",color:"#3b6d11",bg:"#eaf3de",border:"#c0dd97"},
-  {label:"Compliance",          color:"#534AB7", bg:"#EEEDFE", border:"#AFA9EC"},
-  {label:"Growth",              color:"#0F6E56", bg:"#E1F5EE", border:"#5DCAA5"},
   {label:"Tech debt",           color:"#5F5E5A", bg:"#F1EFE8", border:"#B4B2A9"},
-  {label:"Partner enablement",  color:"#185FA5", bg:"#e6f1fb", border:"#378ADD"},
   {label:"Quick win",           color:"#854F0B", bg:"#faeeda", border:"#EF9F27"},
 ];
 
@@ -810,6 +821,7 @@ function calcScoreFromConfig(item){
 }
 
 function phColor(p) {
+  if(p==='Completed') return 'green';
   if(p.includes('Release')) return 'green';
   if(p.includes('Testing')) return 'purple';
   if(p.includes('Blocked')) return 'red';
@@ -903,6 +915,7 @@ function getFiltered() {
   const so=document.getElementById('sort-f').value;
   const rq=document.getElementById('req-f').value;
   let list=items.filter(i=>{
+    if(i.phase==='Completed') return false;
     const ms=!s||i.title.toLowerCase().includes(s)||i.key.toLowerCase().includes(s)||i.requestor.toLowerCase().includes(s);
     let mf;
     if(selectedPhases.size===0) { mf=true; }
@@ -1236,7 +1249,7 @@ function openPres() {
   document.getElementById('pres-mode').classList.add('active');
 }
 function closePres(){document.getElementById('pres-mode').classList.remove('active');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePres();closeRoadmap();closeChangelog();closeModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePres();closeRoadmap();closeChangelog();closeCompleted();closeModal();}});
 
 function renderModalDims(){
   const c=document.getElementById('modal-dims');if(!c)return;
@@ -1596,6 +1609,63 @@ function openRoadmap() {
   renderRoadmap();
   document.getElementById('roadmap-mode').classList.add('active');
 }
+
+function openCompleted() {
+  document.getElementById('completed-mode').classList.add('active');
+  renderCompleted();
+}
+function closeCompleted() {
+  document.getElementById('completed-mode').classList.remove('active');
+}
+
+function renderCompleted() {
+  const completed = items.filter(i => i.phase === 'Completed');
+  const el = document.getElementById('completed-list');
+  if (!completed.length) {
+    el.innerHTML = '<div class="empty">No completed initiatives yet.</div>';
+    return;
+  }
+  el.innerHTML = completed.map((item, idx) => {
+    const pc = 'green';
+    const cs = Math.round(item.score);
+    const cmts = comments[item.key] || [];
+    const ccount = cmts.reduce((s,c) => s + 1 + (c.replies ? c.replies.length : 0), 0);
+    return `<div class="card" id="completed-card-${item.key}" style="margin-bottom:8px">
+      <div class="card-main" style="pointer-events:none">
+        <div class="rank">${idx+1}</div>
+        <div class="vote-col">
+          <button class="vbtn" disabled style="opacity:0.3">▲</button>
+          <span class="vscore">${item.score > 0 ? '+' : ''}0</span>
+          <button class="vbtn" disabled style="opacity:0.3">▼</button>
+        </div>
+        <div class="cbody">
+          <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
+          <div class="cmeta">
+            <div class="dim-pill"><div class="dim-pill-lbl">Effort</div><div class="dim-pill-val">${item.effort}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Value</div><div class="dim-pill-val">${item.value}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Importance</div><div class="dim-pill-val">${item.importance}/5</div></div>
+            <div class="dim-pill"><div class="dim-pill-lbl">Urgency</div><div class="dim-pill-val">${item.urgency}/5</div></div>
+            ${ccount ? `<span style="margin-left:4px">${ccount} comment${ccount!==1?'s':''}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:12px 14px;gap:10px;align-self:stretch;flex-shrink:0;border-left:0.5px solid var(--border);min-width:170px">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+            <span class="badge badge-green">Completed</span>
+            <span class="badge" style="background:var(--text);color:var(--bg);border-color:var(--text)">Score ${cs}</span>
+          </div>
+          <button class="revert-btn" style="pointer-events:all" onclick="revertCompleted('${item.key}')">↩ Revert</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function revertCompleted(key) {
+  if (!confirm('Move this initiative back to "Ready for Release"?')) return;
+  await db.from('initiatives').update({phase:'Ready for Release', updated_at: new Date().toISOString()}).eq('key', key);
+  logActivity('initiative_updated', key, 'Reverted from Completed');
+}
+
 function closeRoadmap() {
   document.getElementById('roadmap-mode').classList.remove('active');
 }
