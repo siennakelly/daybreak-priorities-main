@@ -876,11 +876,10 @@ async function init(url,key,name) {
 
 async function loadAll(){
   await loadScoringConfig();
-  const [iRes,vRes,cRes,fRes]=await Promise.all([
+  const [iRes,vRes,cRes]=await Promise.all([
     db.from('initiatives').select('*').order('score',{ascending:false}),
     db.from('votes').select('*'),
     db.from('comments').select('*').order('created_at',{ascending:true}),
-    db.from('sync_flags').select('initiative_key')
   ]);
   items=iRes.data||[];
   votes={};
@@ -888,9 +887,8 @@ async function loadAll(){
   comments={};
   const flat=cRes.data||[];
   flat.filter(c=>!c.parent_id).forEach(c=>{if(!comments[c.initiative_key])comments[c.initiative_key]=[];comments[c.initiative_key].push({...c,replies:flat.filter(r=>r.parent_id===c.id)});});
-  // Load flags
-  flagged=new Set();
-  (fRes.data||[]).forEach(r=>flagged.add(r.initiative_key));
+  // Load flags separately so failure doesn't break everything
+  await loadFlagged();
   populateRequestorFilter();renderTagFilterBar();render();
 }
 
