@@ -921,7 +921,22 @@ async function loadAll(){
 }
 
 function subscribeRealtime() {
-  db.channel('all').on('postgres_changes',{event:'*',schema:'public'},()=>loadAll()).subscribe();
+  db.channel('initiatives-ch').on('postgres_changes',{event:'*',schema:'public',table:'initiatives'},payload=>{
+    if(payload.eventType==='INSERT'){ items.push(payload.new); }
+    else if(payload.eventType==='UPDATE'){ const i=items.findIndex(x=>x.key===payload.new.key); if(i>-1) items[i]=payload.new; else items.push(payload.new); }
+    else if(payload.eventType==='DELETE'){ items=items.filter(x=>x.key!==payload.old.key); }
+    populateRequestorFilter();render();
+    if(document.getElementById('completed-mode').classList.contains('active')) renderCompleted();
+  }).subscribe();
+  db.channel('votes-ch').on('postgres_changes',{event:'*',schema:'public',table:'votes'},payload=>{
+    const v=payload.new||payload.old;
+    if(!v) return;
+    if(!votes[v.initiative_key]) votes[v.initiative_key]={};
+    if(payload.eventType==='DELETE') delete votes[v.initiative_key][v.user_name];
+    else votes[v.initiative_key][v.user_name]=v.value;
+    render();
+  }).subscribe();
+  db.channel('comments-ch').on('postgres_changes',{event:'*',schema:'public',table:'comments'},()=>loadAll()).subscribe();
 }
 
 function getFiltered() {
@@ -966,7 +981,9 @@ async function vote(key,dir,e) {
   if(!name){alert('Enter your name above before voting.');return;}
   await db.from('votes').upsert({initiative_key:key,user_name:name,value:newVal},{onConflict:'initiative_key,user_name'});
   if(!votes[key])votes[key]={};votes[key][name]=newVal;
-  logActivity(newVal===0?'vote_removed':newVal===1?'vote':'vote_down',key,null);
+  // Log correctly: if newVal is 0, it's a removal regardless of direction
+  const logType = newVal===0 ? 'vote_removed' : newVal===1 ? 'vote' : 'vote_down';
+  logActivity(logType,key,null);
   render();
 }
 
