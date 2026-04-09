@@ -826,6 +826,7 @@ function calcScore(e,v,i,u){return Math.round(((e/5)*20+(v/5)*28+(i/5)*25+(u/5)*
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
+function netVote(key) { const v=votes[key]||{}; return Object.values(v).reduce((s,x)=>s+x,0); }
 function userVote(key) { const v=votes[key]||{}; return v[who()]||0; }
 function combined(key){const item=items.find(i=>i.key===key);if(!item)return 0;return item.score;}
 function timeAgo(ts) {
