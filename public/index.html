@@ -134,6 +134,10 @@
   .badge-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
   .badge-red { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
   .badge-amber { background: var(--amber-bg); color: var(--amber-text); border-color: var(--amber-border); }
+  .badge-purple { background: #ede9f6; color: #4a2d8a; border-color: #a98de0; }
+  .badge-teal { background: #e0f4f1; color: #0e5c52; border-color: #5dbdb3; }
+  .badge-slate { background: #e8edf2; color: #2e4057; border-color: #8aaabb; }
+  .badge-orange { background: #feeee0; color: #7a3300; border-color: #f0935a; }
   .cmeta { display: flex; gap: 8px; font-size: 12px; color: var(--text2); flex-wrap: wrap; margin-top: 6px; align-items: center; justify-content: center; }
   .dim-pill { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 5px 10px; min-width: 64px; }
   .dim-pill-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
@@ -436,11 +440,7 @@
       </div>
     </div>
 
-    <div class="who-bar">
-      <span>Voting and commenting as:</span>
-      <strong id="who-display" style="color:var(--text)"></strong>
-      <span style="color:var(--text3);font-size:12px">— visible to your whole team</span>
-    </div>
+
 
     <div id="tag-filter-bar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem"></div>
     <div class="ctrl-row">
@@ -808,10 +808,13 @@ function calcScoreFromConfig(item){
 
 function phColor(p) {
   if(p.includes('Release')) return 'green';
-  if(p.includes('Testing')) return 'blue';
+  if(p.includes('Testing')) return 'purple';
   if(p.includes('Blocked')) return 'red';
-  if(p.includes('Scoping')||p.includes('Development')) return 'amber';
-  return '';
+  if(p.includes('Development')) return 'amber';
+  if(p.includes('Scoping')) return 'teal';
+  if(p.includes('Requirements Ready')) return 'slate';
+  if(p.includes('Requirements Not')) return 'orange';
+  return 'slate';
 }
 function initials(n) { return n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2); }
 function fmtRev(r) { return r ? '$'+r.toLocaleString()+'/mo' : '—'; }
@@ -1093,7 +1096,7 @@ function render() {
   const banner=document.getElementById('sync-banner');
   if(banner){
     if(flaggedItems.length){
-      banner.innerHTML=`<div class="sync-banner"><div><strong>★ ${flaggedItems.length} initiative${flaggedItems.length!==1?'s':''} flagged for this week's sync</strong><span style="display:block;margin-top:2px">${flaggedItems.map(i=>i.title.slice(0,40)+(i.title.length>40?'…':'')).join(' · ')}</span></div><span>${flaggedItems.length} item${flaggedItems.length!==1?'s':''}</span></div>`;
+      banner.innerHTML=`<div class="sync-banner"><strong>★ ${flaggedItems.length} initiative${flaggedItems.length!==1?'s':''} flagged for this week's sync</strong></div>`;
     } else {
       banner.innerHTML='';
     }
@@ -1132,9 +1135,8 @@ function render() {
             <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
             <div class="badges">
               ${item.is_new?'<span class="badge badge-amber">New</span>':''}${flagged.has(item.key)?'<span class="badge badge-flag">For sync</span>':''}
-              ${pc?`<span class="badge badge-${pc}">${item.phase}</span>`:`<span class="badge">${item.phase}</span>`}
-              <span class="badge badge-blue">Score ${cs}</span>
-              ${item.revenue?'':''}
+              ${pc?`<span class="badge badge-${pc}">${item.phase}</span>`:`<span class="badge badge-slate">${item.phase}</span>`}
+              <span class="badge" style="background:var(--text);color:var(--bg);border-color:var(--text)">Score ${cs}</span>
             </div>
           </div>
           <div class="cmeta">
@@ -1145,7 +1147,10 @@ function render() {
             ${ccount?`<span style="margin-left:4px">${ccount} comment${ccount!==1?'s':''}</span>`:''}
           </div>
         </div>
-        <button class="flag-btn" style="align-self:center;margin-right:4px;padding:6px 10px;font-size:16px;background:var(--bg);border-color:var(--border2)" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="${flagged.has(item.key)?'Remove flag':'Flag for sync'}">${flagged.has(item.key)?'★':'☆'}</button><button class="exp-btn" style="color:var(--text2);font-weight:600;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 12px;background:var(--bg)">${isExp?'Collapse ▲':'Details ▼'}</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:10px 12px 10px 8px;gap:8px;align-self:stretch;flex-shrink:0">
+          <button class="flag-btn" onclick="event.stopPropagation();toggleFlag('${item.key}',event)" title="${flagged.has(item.key)?'Remove flag':'Flag for sync'}">${flagged.has(item.key)?'★':'☆'}</button>
+          <button class="exp-btn" style="color:var(--text2);font-weight:600;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:6px 12px;background:var(--bg)">${isExp?'Collapse ▲':'Details ▼'}</button>
+        </div>
       </div>
       ${isExp?`<div class="detail">
         <div class="sg">${scoringConfig.dims.map(d=>`<div class='si'><div class='si-lbl'>${d.label} (${d.weight}%)</div><div class='si-val'>${item[d.id]!==undefined?item[d.id]+'/5':'—'}</div></div>`).join('')}</div>
