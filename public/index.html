@@ -290,6 +290,8 @@
   .sync-banner{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:8px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:center;justify-content:space-between;gap:12px}
   .sync-banner strong{font-weight:500}
   .sync-banner span{color:var(--amber-text);opacity:.8;font-size:12px}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:var(--radius-lg);font-size:13px;font-weight:500;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ROADMAP */
   #roadmap-mode{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto}
@@ -424,6 +426,7 @@
 </div>
 
 <!-- MAIN APP -->
+<div id="toast"></div>
 <div id="app">
   <div class="app-wrap">
     <div class="hdr">
@@ -434,7 +437,7 @@
         <button class="btn btn-pres" onclick="openPres()">Presentation mode</button>
         <button class="btn" onclick="openRoadmap()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)">2026 Roadmap</button>
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
-        <button class="btn" onclick="openChangelog()">Changelog</button>
+        <button class="btn" onclick="openChangelog()">Change Log</button>
         <button class="btn" onclick="openSettings()">Settings</button>
 
       </div>
@@ -570,7 +573,7 @@
   <div class="cl-wrap">
     <div class="cl-hdr">
       <div>
-        <h1>Changelog</h1>
+        <h1>Change Log</h1>
         <div class="sub">Full history of all changes — votes, edits, comments, new initiatives</div>
       </div>
       <button class="cl-exit" onclick="closeChangelog()">Close</button>
@@ -820,7 +823,9 @@ function initials(n) { return n.split(' ').map(x=>x[0]).join('').toUpperCase().s
 function fmtRev(r) { return r ? '$'+r.toLocaleString()+'/mo' : '—'; }
 function who() { return localStorage.getItem('db_name')||'Anonymous'; }
 function calcScore(e,v,i,u){return Math.round(((e/5)*20+(v/5)*28+(i/5)*25+(u/5)*27)*10)/10;}
-function netVote(key) { const v=votes[key]||{}; return Object.values(v).reduce((s,x)=>s+x,0); }
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+
+function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
 function userVote(key) { const v=votes[key]||{}; return v[who()]||0; }
 function combined(key){const item=items.find(i=>i.key===key);if(!item)return 0;return item.score;}
 function timeAgo(ts) {
@@ -1045,8 +1050,16 @@ async function saveInitiative() {
   const tags=JSON.stringify(getModalTags());
   const data={key,title,requestor,phase,effort,value,importance,urgency,score,revenue,notes,tags,start_week:startWeek,duration_weeks:durationWeeks,is_new:!editKey,updated_at:new Date().toISOString()};
   if(editKey){
+    const oldRank=getRank(editKey);
     await db.from('initiatives').update(data).eq('key',editKey);
     logActivity('initiative_updated',key,title);
+    // Update local item so getRank reflects new score
+    const idx=items.findIndex(i=>i.key===editKey);
+    if(idx>-1) Object.assign(items[idx],data);
+    const newRank=getRank(editKey);
+    if(oldRank>0&&newRank>0&&oldRank!==newRank){
+      showToast(`Rank changed from ${oldRank} to ${newRank}`);
+    }
   } else {
     const existing=items.find(i=>i.key===key);if(existing){alert('An initiative with this key already exists.');return;}
     await db.from('initiatives').insert(data);
