@@ -287,6 +287,20 @@
   .flag-btn:hover{border-color:var(--amber-border);color:var(--amber-text);background:var(--amber-bg)}
   .flag-btn.flagged{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);font-weight:500}
   .badge-flag{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border)}
+
+  .scoring-guide{border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem;background:var(--bg)}
+  .scoring-guide-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);font-family:var(--font);text-align:left}
+  .scoring-guide-toggle:hover{background:var(--bg2)}
+  .scoring-guide-body{display:none;border-top:0.5px solid var(--border)}
+  .scoring-guide-body.open{display:block}
+  .sg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sg-cell{padding:14px 16px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+  .sg-cell:nth-child(2n){border-right:none}
+  .sg-cell:nth-last-child(-n+2){border-bottom:none}
+  .sg-lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px}
+  .sg-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin-bottom:5px}
+  .sg-num{background:#DDE4ED;color:#221D35;border-radius:4px;font-weight:600;font-size:12px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sg-desc{color:var(--text2);line-height:1.4}
   .sync-banner{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:8px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:center;justify-content:space-between;gap:12px}
   .sync-banner strong{font-weight:500}
   .sync-banner span{color:var(--amber-text);opacity:.8;font-size:12px}
@@ -453,6 +467,48 @@
 
 
 
+    <div class="scoring-guide">
+      <button class="scoring-guide-toggle" onclick="document.getElementById('sg-body').classList.toggle('open');this.querySelector('.sg-chevron').style.transform=document.getElementById('sg-body').classList.contains('open')?'rotate(180deg)':''">
+        <span>Scoring guide</span>
+        <span class="sg-chevron" style="font-size:11px;color:var(--text3);transition:transform .2s">▼</span>
+      </button>
+      <div class="scoring-guide-body" id="sg-body">
+        <div class="sg-grid">
+          <div class="sg-cell">
+            <div class="sg-lbl">Effort &amp; cost</div>
+            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">More than 1 month across multiple developers</div></div>
+            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">2 weeks to 1 month, multiple developers</div></div>
+            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Full sprint (2 weeks), multiple developers</div></div>
+            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">~1 sprint for a single developer</div></div>
+            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Less than a week for a single developer</div></div>
+          </div>
+          <div class="sg-cell">
+            <div class="sg-lbl">Importance</div>
+            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">Will not negatively impact business if not done immediately</div></div>
+            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">May harm business in a negligible way per quarterly OKRs</div></div>
+            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Will certainly harm business in a small way per quarterly OKRs</div></div>
+            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">Will ruin a minor segment, loss of small partner(s), minor reputation damage</div></div>
+            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Will ruin a major segment, loss of major partner(s), reputation damage</div></div>
+          </div>
+          <div class="sg-cell">
+            <div class="sg-lbl">Value ($)</div>
+            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">$0 revenue or cost reduction</div></div>
+            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">Minor — $1 to $1,000/mo</div></div>
+            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Medium — $1,000 to $20,000/mo</div></div>
+            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">High — $20,000 to $100,000/mo</div></div>
+            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Very high — over $100,000/mo</div></div>
+          </div>
+          <div class="sg-cell">
+            <div class="sg-lbl">Urgency</div>
+            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">Can be done any time, benefits don't scale with volume</div></div>
+            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">Can be done any time, but benefits do scale with volume</div></div>
+            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Strong reason to do sooner — exponential benefits, regulatory risk, etc.</div></div>
+            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">Very strong — contractual obligation, fundamentally broken product experience</div></div>
+            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Must be done ASAP or consequence will ensue</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="tag-filter-bar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem"></div>
     <div class="ctrl-row">
       <input type="text" id="search" placeholder="Search initiatives..." oninput="render()" />
