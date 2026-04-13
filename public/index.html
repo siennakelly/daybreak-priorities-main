@@ -523,6 +523,12 @@
       <select id="req-f" onchange="render()">
         <option value="">All requestors</option>
       </select>
+      <select id="tag-completeness-f" onchange="render()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font)">
+        <option value="">All initiatives</option>
+        <option value="missing_category">Missing category tag</option>
+        <option value="missing_channel">Missing channel tag</option>
+        <option value="missing_any">Missing any required tag</option>
+      </select>
     </div>
 
     <div class="stats" id="stats"></div>
@@ -993,6 +999,13 @@ function getFiltered() {
     else if(selectedPhases.has('__flagged__')) { mf=flagged.has(i.key)||selectedPhases.has(i.phase); }
     else { mf=selectedPhases.has(i.phase); }
     const mt=activeTagFilters.size===0||((()=>{const t=i.tags?JSON.parse(i.tags||'[]'):[];return [...activeTagFilters].every(f=>t.includes(f));})());
+    const tc=document.getElementById('tag-completeness-f').value;
+    const itags=i.tags?JSON.parse(i.tags||'[]'):[];
+    const hasCat=['Revenue driving','Cost reduction','Risk mitigation'].some(t=>itags.includes(t));
+    const hasChan=['DTC','Commercial'].some(t=>itags.includes(t));
+    if(tc==='missing_category'&&hasCat) return false;
+    if(tc==='missing_channel'&&hasChan) return false;
+    if(tc==='missing_any'&&hasCat&&hasChan) return false;
     return ms&&mf&&mt&&(!rq||i.requestor===rq);
   });
   const PHASE_ORDER=['Ready for Release','Testing','Development','Product Scoping','Requirements Ready, Not Started','Requirements Not Ready','Blocked by Stakeholder'];
