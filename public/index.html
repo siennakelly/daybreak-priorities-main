@@ -1862,7 +1862,7 @@ function renderCompleted() {
         <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Completed</div>
         <div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${completed.length}</div>
       </div>
-      <div class="stat"></div>
+      <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Avg score</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${completed.length?Math.round(completed.reduce((s,i)=>s+i.score,0)/completed.length):'—'}</div></div>
       <div class="stat-pie">
         <div class="stat-lbl">Category Tags</div>
         <canvas id="cpie-cat" width="130" height="90"></canvas>
