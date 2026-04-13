@@ -104,6 +104,8 @@
 
   /* STATS */
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+  .stat-pie { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
+  .stat-pie canvas { display: block; margin: 6px auto 0; }
   .stat { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .stat-val { font-size: 22px; font-weight: 500; }
@@ -1187,17 +1189,81 @@ async function deleteItem(key,e) {
 }
 
 function renderStats(list) {
-  const totalRev=list.reduce((s,i)=>s+i.revenue,0);
+  const totalVotes=Object.values(votes).reduce((s,v)=>s+Object.values(v).reduce((a,x)=>a+Math.abs(x),0),0);
   const sorted=[...list].sort((a,b)=>combined(b.key)-combined(a.key));
   const topScore=sorted.length?Math.round(combined(sorted[0].key)):0;
-  const totalVotes=Object.values(votes).reduce((s,v)=>s+Object.values(v).reduce((a,x)=>a+Math.abs(x),0),0);
+
+  const CAT_TAGS=['Revenue driving','Cost reduction','Risk mitigation'];
+  const catCounts={};
+  CAT_TAGS.forEach(t=>catCounts[t]=0);
+  let catUntagged=0;
+  list.forEach(i=>{
+    const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+    const found=CAT_TAGS.filter(t=>tags.includes(t));
+    if(found.length===0) catUntagged++;
+    else found.forEach(t=>catCounts[t]++);
+  });
+
+  let dtcOnly=0,commOnly=0,both=0,neither=0;
+  list.forEach(i=>{
+    const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+    const hasDTC=tags.includes('DTC');
+    const hasComm=tags.includes('Commercial');
+    if(hasDTC&&hasComm) both++;
+    else if(hasDTC) dtcOnly++;
+    else if(hasComm) commOnly++;
+    else neither++;
+  });
+
   document.getElementById('stats').innerHTML=`
-    <div class="stat"><div class="stat-lbl">Initiatives</div><div class="stat-val">${list.length}</div></div>
-    <div class="stat"><div class="stat-lbl">Top community score</div><div class="stat-val">${topScore}</div></div>
-    <div class="stat"><div class="stat-lbl">Revenue pipeline</div><div class="stat-val">$${Math.round(totalRev/1000)}k/mo</div></div>
-    <div class="stat"><div class="stat-lbl">Votes cast</div><div class="stat-val">${totalVotes}</div></div>
+    <div class="stat"><div class="stat-lbl">Initiatives</div><div class="stat-val">${list.length}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${totalVotes} votes cast</div></div>
+    <div class="stat"><div class="stat-lbl">Top score</div><div class="stat-val">${topScore}</div></div>
+    <div class="stat-pie">
+      <div class="stat-lbl">Category tags</div>
+      <canvas id="pie-cat" width="130" height="90"></canvas>
+      <div id="pie-cat-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+    </div>
+    <div class="stat-pie">
+      <div class="stat-lbl">DTC / Commercial</div>
+      <canvas id="pie-chan" width="130" height="90"></canvas>
+      <div id="pie-chan-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+    </div>
   `;
+
+  drawPie('pie-cat',
+    [...CAT_TAGS.map(t=>({label:t.split(' ')[0],val:catCounts[t]})),catUntagged?{label:'Untagged',val:catUntagged}:null].filter(Boolean),
+    ['#97C459','#85b7eb','#f09595','#B4B2A9'],
+    'pie-cat-legend'
+  );
+  drawPie('pie-chan',
+    [{label:'DTC only',val:dtcOnly},{label:'Commercial only',val:commOnly},{label:'Both',val:both},neither?{label:'Neither',val:neither}:null].filter(Boolean),
+    ['#85b7eb','#a98de0','#5DCAA5','#B4B2A9'],
+    'pie-chan-legend'
+  );
 }
+
+function drawPie(canvasId,data,colors,legendId){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const total=data.reduce((s,d)=>s+d.val,0);
+  if(total===0){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
+  const cx=canvas.width/2,cy=canvas.height/2,r=Math.min(cx,cy)-4;
+  let angle=-Math.PI/2;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const legendEl=document.getElementById(legendId);
+  let legendHTML='';
+  data.forEach((d,i)=>{
+    if(d.val===0)return;
+    const slice=(d.val/total)*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
+    ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    angle+=slice;
+    legendHTML+=`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;display:inline-block"></span>${d.label} (${d.val})</span>`;
+  });
+  if(legendEl)legendEl.innerHTML=legendHTML;
+}
+
 
 function render() {
   const list=getFiltered();
