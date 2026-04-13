@@ -1216,8 +1216,8 @@ function renderStats(list) {
   });
 
   document.getElementById('stats').innerHTML=`
-    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div class="stat-lbl">Initiatives</div><div class="stat-val">${list.length}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${totalVotes} votes cast</div></div>
-    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div class="stat-lbl">Top score</div><div class="stat-val">${topScore}</div></div>
+    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Initiatives</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${list.length}</div><div style="font-size:12px;color:var(--text3);margin-top:8px">${totalVotes} votes cast</div></div>
+    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Top score</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${topScore}</div></div>
     <div class="stat-pie">
       <div class="stat-lbl">Category Tags</div>
       <canvas id="pie-cat" width="130" height="90"></canvas>
