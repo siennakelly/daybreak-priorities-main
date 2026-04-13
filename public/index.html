@@ -480,6 +480,12 @@
     <div id="tag-filter-bar" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.75rem"></div>
     <div class="ctrl-row">
       <input type="text" id="search" placeholder="Search initiatives..." oninput="render()" />
+      <select id="sort-f" onchange="render()">
+        <option value="score">Sort: Formula Score</option>
+        <option value="revenue">Sort: Revenue Impact</option>
+        <option value="votes">Sort: Team Votes</option>
+        <option value="phase">Sort: Phase</option>
+      </select>
       <div class="ms-wrap" id="phase-ms-wrap">
         <div class="ms-trigger" id="phase-ms-trigger" onclick="togglePhaseDropdown()">
           <span id="phase-ms-label">All statuses</span>
@@ -514,16 +520,11 @@
           <div class="ms-clear" onclick="clearPhaseFilter()">Clear selection</div>
         </div>
       </div>
-      <select id="sort-f" onchange="render()">
-        <option value="score">Sort: Formula Score</option>
-        <option value="revenue">Sort: Revenue Impact</option>
-        <option value="votes">Sort: Team Votes</option>
-        <option value="phase">Sort: Phase</option>
-      </select>
       <select id="req-f" onchange="render()">
         <option value="">All requestors</option>
       </select>
       <select id="tag-completeness-f" onchange="render()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font)">
+        <option value="">Cleanup needed?</option>
         <option value="missing_category">Missing category tag</option>
         <option value="missing_channel">Missing channel tag</option>
         <option value="missing_any">Missing any required tag</option>
