@@ -482,7 +482,7 @@
       <input type="text" id="search" placeholder="Search initiatives..." oninput="render()" />
       <div class="ms-wrap" id="phase-ms-wrap">
         <div class="ms-trigger" id="phase-ms-trigger" onclick="togglePhaseDropdown()">
-          <span id="phase-ms-label">All phases</span>
+          <span id="phase-ms-label">All statuses</span>
           <span class="ms-arrow">▼</span>
         </div>
         <div class="ms-dropdown" id="phase-ms-dropdown">
@@ -524,7 +524,6 @@
         <option value="">All requestors</option>
       </select>
       <select id="tag-completeness-f" onchange="render()" style="font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font)">
-        <option value="">All initiatives</option>
         <option value="missing_category">Missing category tag</option>
         <option value="missing_channel">Missing channel tag</option>
         <option value="missing_any">Missing any required tag</option>
@@ -679,7 +678,7 @@
       </div>
       <div class="rm-controls">
         <select id="rm-filter" onchange="renderRoadmap()">
-          <option value="">All initiatives</option>
+          <option value="">Cleanup needed?</option>
           <option value="scheduled">Scheduled only</option>
           <option value="flagged">Flagged for sync</option>
         </select>
@@ -741,11 +740,12 @@ function updatePhaseLabel() {
   const badge = document.getElementById('phase-ms-badge');
   const trigger = document.getElementById('phase-ms-trigger');
   if(selectedPhases.size === 0) {
-    label.textContent = 'All phases';
+    label.textContent = 'All statuses';
     if(badge) badge.remove();
   } else if(selectedPhases.size === 1) {
     const val = [...selectedPhases][0];
     label.textContent = val === '__flagged__' ? '★ Flagged for sync' : val;
+  if(document.getElementById('phase-ms-label').textContent === '') document.getElementById('phase-ms-label').textContent = 'All statuses';
     if(badge) badge.remove();
   } else {
     label.textContent = 'Phases';
