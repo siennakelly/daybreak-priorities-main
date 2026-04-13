@@ -106,7 +106,7 @@
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
   .stat-pie { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
   .stat-pie canvas { display: block; margin: 6px auto 0; }
-  .stat { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
+  .stat { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; display: flex; flex-direction: column; justify-content: center; }
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .stat-val { font-size: 22px; font-weight: 500; }
 
@@ -773,7 +773,7 @@ document.addEventListener('click', function(e) {
 
 const ALL_TAGS = [
   {label:"Revenue driving",     color:"#27500a", bg:"#eaf3de", border:"#97c459"},
-  {label:"Cost reduction",      color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
+  {label:"Cost savings",        color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
   {label:"Risk mitigation",     color:"#791f1f", bg:"#fcebeb", border:"#f09595"},
   {label:"DTC",                 color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
   {label:"Commercial",          color:"#4a2d8a", bg:"#ede9f6", border:"#a98de0"},
@@ -1193,7 +1193,7 @@ function renderStats(list) {
   const sorted=[...list].sort((a,b)=>combined(b.key)-combined(a.key));
   const topScore=sorted.length?Math.round(combined(sorted[0].key)):0;
 
-  const CAT_TAGS=['Revenue driving','Cost reduction','Risk mitigation'];
+  const CAT_TAGS=['Revenue driving','Cost savings','Risk mitigation'];
   const catCounts={};
   CAT_TAGS.forEach(t=>catCounts[t]=0);
   let catUntagged=0;
@@ -1216,10 +1216,10 @@ function renderStats(list) {
   });
 
   document.getElementById('stats').innerHTML=`
-    <div class="stat"><div class="stat-lbl">Initiatives</div><div class="stat-val">${list.length}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${totalVotes} votes cast</div></div>
-    <div class="stat"><div class="stat-lbl">Top score</div><div class="stat-val">${topScore}</div></div>
+    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div class="stat-lbl">Initiatives</div><div class="stat-val">${list.length}</div><div style="font-size:11px;color:var(--text3);margin-top:4px">${totalVotes} votes cast</div></div>
+    <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div class="stat-lbl">Top score</div><div class="stat-val">${topScore}</div></div>
     <div class="stat-pie">
-      <div class="stat-lbl">Category tags</div>
+      <div class="stat-lbl">Category Tags</div>
       <canvas id="pie-cat" width="130" height="90"></canvas>
       <div id="pie-cat-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
     </div>
@@ -1259,7 +1259,7 @@ function drawPie(canvasId,data,colors,legendId){
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
     ctx.fillStyle=colors[i%colors.length];ctx.fill();
     angle+=slice;
-    legendHTML+=`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;display:inline-block"></span>${d.label} (${d.val})</span>`;
+    legendHTML+=`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;display:inline-block"></span>${d.label} (${d.val}, ${Math.round(d.val/total*100)}%)</span>`;
   });
   if(legendEl)legendEl.innerHTML=legendHTML;
 }
