@@ -668,6 +668,7 @@
         <option value="score">Sort: Formula Score</option>
       </select>
     </div>
+    <div class="stats" id="completed-stats" style="margin-bottom:1rem"></div>
     <div class="list" id="completed-list"><div class="loading">Loading...</div></div>
   </div>
 </div>
@@ -1834,6 +1835,55 @@ function renderCompleted() {
     el.innerHTML = '<div class="empty">No completed initiatives yet.</div>';
     return;
   }
+  // Render stats
+  const statsEl = document.getElementById('completed-stats');
+  if(statsEl) {
+    const CAT_TAGS=['Revenue driving','Cost savings','Risk mitigation'];
+    const catCounts={};
+    CAT_TAGS.forEach(t=>catCounts[t]=0);
+    let catUntagged=0;
+    completed.forEach(i=>{
+      const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+      const found=CAT_TAGS.filter(t=>tags.includes(t));
+      if(found.length===0) catUntagged++;
+      else found.forEach(t=>catCounts[t]++);
+    });
+    let dtcOnly=0,commOnly=0,both=0,neither=0;
+    completed.forEach(i=>{
+      const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+      const hasDTC=tags.includes('DTC'), hasComm=tags.includes('Commercial');
+      if(hasDTC&&hasComm) both++;
+      else if(hasDTC) dtcOnly++;
+      else if(hasComm) commOnly++;
+      else neither++;
+    });
+    statsEl.innerHTML=`
+      <div class="stat" style="display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Completed</div>
+        <div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${completed.length}</div>
+      </div>
+      <div class="stat"></div>
+      <div class="stat-pie">
+        <div class="stat-lbl">Category Tags</div>
+        <canvas id="cpie-cat" width="130" height="90"></canvas>
+        <div id="cpie-cat-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+      </div>
+      <div class="stat-pie">
+        <div class="stat-lbl">DTC / Commercial</div>
+        <canvas id="cpie-chan" width="130" height="90"></canvas>
+        <div id="cpie-chan-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+      </div>
+    `;
+    drawPie('cpie-cat',
+      [...CAT_TAGS.map(t=>({label:t.split(' ')[0],val:catCounts[t]})),catUntagged?{label:'Untagged',val:catUntagged}:null].filter(Boolean),
+      ['#97C459','#85b7eb','#f09595','#B4B2A9'],'cpie-cat-legend'
+    );
+    drawPie('cpie-chan',
+      [{label:'DTC only',val:dtcOnly},{label:'Commercial only',val:commOnly},{label:'Both',val:both},neither?{label:'Neither',val:neither}:null].filter(Boolean),
+      ['#85b7eb','#a98de0','#5DCAA5','#B4B2A9'],'cpie-chan-legend'
+    );
+  }
+
   el.innerHTML = completed.map((item, idx) => {
     const cs = Math.round(item.score);
     const nv = netVote(item.key);
