@@ -301,6 +301,19 @@
   .sg-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin-bottom:5px}
   .sg-num{background:#DDE4ED;color:#221D35;border-radius:4px;font-weight:600;font-size:12px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .sg-desc{color:var(--text2);line-height:1.4}
+
+  .sg-tooltip-btn{background:none;border:0.5px solid var(--border2);border-radius:50%;width:20px;height:20px;font-size:11px;color:var(--text3);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font);flex-shrink:0;position:relative}
+  .sg-tooltip-btn:hover{background:var(--bg2);color:var(--text)}
+  .sg-popover{display:none;position:absolute;top:28px;left:50%;transform:translateX(-50%);z-index:500;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:12px;width:540px;max-width:90vw;box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+  .sg-popover.open{display:block}
+  .sg-popover-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0}
+  .sg-popover-cell{padding:10px 12px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border)}
+  .sg-popover-cell:nth-child(2n){border-right:none}
+  .sg-popover-cell:nth-last-child(-n+2){border-bottom:none}
+  .sg-popover-lbl{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+  .sg-popover-row{display:flex;align-items:flex-start;gap:6px;font-size:11px;margin-bottom:4px}
+  .sg-popover-num{background:#DDE4ED;color:#221D35;border-radius:3px;font-weight:600;font-size:11px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sg-popover-desc{color:var(--text2);line-height:1.4}
   .sync-banner{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:8px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:center;justify-content:space-between;gap:12px}
   .sync-banner strong{font-weight:500}
   .sync-banner span{color:var(--amber-text);opacity:.8;font-size:12px}
@@ -449,6 +462,38 @@
 
 <!-- MAIN APP -->
 <div id="toast"></div>
+<div id="sg-popover" class="sg-popover">
+  <div class="sg-popover-grid">
+    <div class="sg-popover-cell"><div class="sg-popover-lbl">Effort &amp; cost</div>
+      <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">More than 1 month across multiple developers</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">2 weeks to 1 month, multiple developers</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Full sprint (2 weeks), multiple developers</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">~1 sprint for a single developer</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Less than a week for a single developer</div></div>
+    </div>
+    <div class="sg-popover-cell"><div class="sg-popover-lbl">Importance</div>
+      <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">Will not negatively impact business if not done immediately</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">May harm business in a negligible way per quarterly OKRs</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Will certainly harm business in a small way per quarterly OKRs</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">Will ruin a minor segment, loss of small partner(s), minor reputation damage</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Will ruin a major segment, loss of major partner(s), reputation damage</div></div>
+    </div>
+    <div class="sg-popover-cell"><div class="sg-popover-lbl">Value ($)</div>
+      <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">$0 revenue or cost reduction</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">Minor — $1 to $1,000/mo</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Medium — $1,000 to $20,000/mo</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">High — $20,000 to $100,000/mo</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Very high — over $100,000/mo</div></div>
+    </div>
+    <div class="sg-popover-cell"><div class="sg-popover-lbl">Urgency</div>
+      <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">Can be done any time, benefits don't scale with volume</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">Can be done any time, but benefits do scale with volume</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Strong reason to do sooner — exponential benefits, regulatory risk, etc.</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">Very strong — contractual obligation, fundamentally broken experience</div></div>
+      <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Must be done ASAP or consequence will ensue</div></div>
+    </div>
+  </div>
+</div>
 <div id="app">
   <div class="app-wrap">
     <div class="hdr">
@@ -516,48 +561,7 @@
     </div>
 
     <div class="stats" id="stats"></div>
-    <div class="scoring-guide">
-      <button class="scoring-guide-toggle" onclick="document.getElementById('sg-body').classList.toggle('open');this.querySelector('.sg-chevron').style.transform=document.getElementById('sg-body').classList.contains('open')?'rotate(180deg)':''">
-        <span>Scoring guide</span>
-        <span class="sg-chevron" style="font-size:11px;color:var(--text3);transition:transform .2s">▼</span>
-      </button>
-      <div class="scoring-guide-body" id="sg-body">
-        <div class="sg-grid">
-          <div class="sg-cell">
-            <div class="sg-lbl">Effort &amp; cost</div>
-            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">More than 1 month across multiple developers</div></div>
-            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">2 weeks to 1 month, multiple developers</div></div>
-            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Full sprint (2 weeks), multiple developers</div></div>
-            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">~1 sprint for a single developer</div></div>
-            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Less than a week for a single developer</div></div>
-          </div>
-          <div class="sg-cell">
-            <div class="sg-lbl">Importance</div>
-            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">Will not negatively impact business if not done immediately</div></div>
-            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">May harm business in a negligible way per quarterly OKRs</div></div>
-            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Will certainly harm business in a small way per quarterly OKRs</div></div>
-            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">Will ruin a minor segment, loss of small partner(s), minor reputation damage</div></div>
-            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Will ruin a major segment, loss of major partner(s), reputation damage</div></div>
-          </div>
-          <div class="sg-cell">
-            <div class="sg-lbl">Value ($)</div>
-            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">$0 revenue or cost reduction</div></div>
-            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">Minor — $1 to $1,000/mo</div></div>
-            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Medium — $1,000 to $20,000/mo</div></div>
-            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">High — $20,000 to $100,000/mo</div></div>
-            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Very high — over $100,000/mo</div></div>
-          </div>
-          <div class="sg-cell">
-            <div class="sg-lbl">Urgency</div>
-            <div class="sg-row"><div class="sg-num">1</div><div class="sg-desc">Can be done any time, benefits don't scale with volume</div></div>
-            <div class="sg-row"><div class="sg-num">2</div><div class="sg-desc">Can be done any time, but benefits do scale with volume</div></div>
-            <div class="sg-row"><div class="sg-num">3</div><div class="sg-desc">Strong reason to do sooner — exponential benefits, regulatory risk, etc.</div></div>
-            <div class="sg-row"><div class="sg-num">4</div><div class="sg-desc">Very strong — contractual obligation, fundamentally broken product experience</div></div>
-            <div class="sg-row"><div class="sg-num">5</div><div class="sg-desc">Must be done ASAP or consequence will ensue</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <div id="sync-banner"></div>
     <div class="list" id="list"><div class="loading">Loading initiatives...</div></div>
@@ -907,6 +911,21 @@ function initials(n) { return n.split(' ').map(x=>x[0]).join('').toUpperCase().s
 function fmtRev(r) { return r ? '$'+r.toLocaleString()+'/mo' : '—'; }
 function who() { return localStorage.getItem('db_name')||'Anonymous'; }
 function calcScore(e,v,i,u){return Math.round(((e/5)*20+(v/5)*28+(i/5)*25+(u/5)*27)*10)/10;}
+
+let openTooltip = null;
+function toggleSgTooltip(e, id) {
+  e.stopPropagation();
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (openTooltip && openTooltip !== el) {
+    openTooltip.classList.remove('open');
+  }
+  el.classList.toggle('open');
+  openTooltip = el.classList.contains('open') ? el : null;
+}
+document.addEventListener('click', function() {
+  if (openTooltip) { openTooltip.classList.remove('open'); openTooltip = null; }
+});
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
@@ -1257,6 +1276,7 @@ function render() {
             <div class="dim-pill"><div class="dim-pill-lbl">Value</div><div class="dim-pill-val">${item.value}/5</div></div>
             <div class="dim-pill"><div class="dim-pill-lbl">Importance</div><div class="dim-pill-val">${item.importance}/5</div></div>
             <div class="dim-pill"><div class="dim-pill-lbl">Urgency</div><div class="dim-pill-val">${item.urgency}/5</div></div>
+            <div style="position:relative"><button class="sg-tooltip-btn" onclick="toggleSgTooltip(event,'sg-popover')" title="Scoring guide">?</button></div>
             ${ccount?`<span style="margin-left:4px">${ccount} comment${ccount!==1?'s':''}</span>`:''}
           </div>
         </div>
