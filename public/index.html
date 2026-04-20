@@ -907,6 +907,40 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+
+async function jiraTransition(key, phase) {
+  try {
+    const res = await fetch('/api/jira-transition', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({key, phase})
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(`✓ Jira updated: ${key} → ${data.status}`);
+    } else {
+      showToast(`⚠ Jira sync failed: ${data.error}`);
+    }
+  } catch(e) {
+    showToast(`⚠ Jira sync error: ${e.message}`);
+  }
+}
+
+async function jiraSync() {
+  try {
+    const res = await fetch('/api/jira-sync');
+    const data = await res.json();
+    if (res.ok && data.updates && data.updates.length > 0) {
+      showToast(`↻ Jira synced: ${data.updates.length} update${data.updates.length!==1?'s':''}`);
+    }
+  } catch(e) {
+    console.warn('Jira sync error:', e.message);
+  }
+}
+
+// Poll Jira every 5 minutes
+setInterval(jiraSync, 5 * 60 * 1000);
+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
 function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
@@ -1174,6 +1208,11 @@ async function saveInitiative() {
     const newRank=getRank(editKey);
     if(oldRank>0&&newRank>0&&oldRank!==newRank){
       showToast(`Rank changed from ${oldRank} to ${newRank}`);
+    }
+    // Sync phase to Jira if it's a real Jira key and phase changed
+    const prevPhase=existingItem?existingItem.phase:null;
+    if(/^[A-Z]+-\d+$/.test(key) && prevPhase !== phase) {
+      jiraTransition(key, phase);
     }
   } else {
     const existing=items.find(i=>i.key===key);if(existing){alert('An initiative with this key already exists.');return;}
