@@ -40,8 +40,10 @@ module.exports = async function handler(req, res) {
       }
 
       const d = await r.json();
-      epics = epics.concat(d.issues || []);
-      nextPageToken = d.isLast ? null : (d.nextPageToken || null);
+      const batch = d.issues || [];
+      epics = epics.concat(batch);
+      // Continue if we got a full page and there's a nextPageToken
+      nextPageToken = (batch.length === 100 && d.nextPageToken) ? d.nextPageToken : null;
     } while (nextPageToken);
 
     // Fetch Supabase initiatives
