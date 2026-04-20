@@ -963,6 +963,7 @@ async function runJiraSyncFromSettings() {
 }
 
 
+async function jiraSync() {
   try {
     const res = await fetch('/api/jira-sync');
     const data = await res.json();
