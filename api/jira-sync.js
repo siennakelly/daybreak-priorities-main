@@ -21,20 +21,17 @@ module.exports = async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   try {
-    // Use GET with URL params instead of POST body
     let epics = [];
     let nextPageToken = null;
 
     do {
-      const jql = encodeURIComponent('project = DAY AND status != "Descoped" ORDER BY created DESC');
+      // Use issuetype id 10000 (Epic) to avoid name localization issues
+      const jql = encodeURIComponent('project = DAY AND issuetype = 10000 AND status != "Descoped"');
       let url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,key&maxResults=100`;
       if (nextPageToken) url += `&nextPageToken=${encodeURIComponent(nextPageToken)}`;
 
       const r = await fetch(url, {
-        headers: {
-          Authorization: `Basic ${AUTH}`,
-          Accept: 'application/json',
-        },
+        headers: { Authorization: `Basic ${AUTH}`, Accept: 'application/json' },
       });
 
       if (!r.ok) {
@@ -43,12 +40,8 @@ module.exports = async function handler(req, res) {
       }
 
       const d = await r.json();
-      // Debug: return raw response on first call
-      if (!nextPageToken) {
-        return res.status(200).json({ debug: true, url: url, responseKeys: Object.keys(d), isLast: d.isLast, issueCount: (d.issues||[]).length, firstIssue: (d.issues||[])[0] || null, rawSample: JSON.stringify(d).slice(0,500) });
-      }
       epics = epics.concat(d.issues || []);
-      nextPageToken = d.nextPageToken || null;
+      nextPageToken = d.isLast ? null : (d.nextPageToken || null);
     } while (nextPageToken);
 
     // Fetch Supabase initiatives
