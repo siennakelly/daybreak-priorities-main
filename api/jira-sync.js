@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
 
     do {
       // Use issuetype id 10000 (Epic) to avoid name localization issues
-      const jql = encodeURIComponent('project = DAY AND issuetype = 10000 AND status != "Descoped"');
+      const jql = encodeURIComponent('project = DAY AND issuetype = 10000 AND status in ("Ready for Release", "QA", "In Progress", "Calibration", "Ready for Work", "To Do", "Blocked", "Done")');
       let url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,key&maxResults=100`;
       if (nextPageToken) url += `&nextPageToken=${encodeURIComponent(nextPageToken)}`;
 
