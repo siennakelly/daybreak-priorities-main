@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daybreak — Product Priorities</title>
+<title>Daybreak — Product Roadmap</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1007,10 +1009,11 @@ function getFiltered() {
     else if(selectedPhases.has('__flagged__')&&selectedPhases.size===1) { mf=flagged.has(i.key); }
     else if(selectedPhases.has('__flagged__')) { mf=flagged.has(i.key)||selectedPhases.has(i.phase); }
     else { mf=selectedPhases.has(i.phase); }
-    const mt=activeTagFilters.size===0||((()=>{let t=[];try{t=JSON.parse(i.tags||'[]');}catch(e){}return [...activeTagFilters].every(f=>t.includes(f));})());
+    const mt=activeTagFilters.size===0||((()=>{let t=[];try{const r=JSON.parse(i.tags||'[]');t=Array.isArray(r)?r:[];}catch(e){}return [...activeTagFilters].every(f=>t.includes(f));})());
     const tc=document.getElementById('tag-completeness-f').value;
-    let itags=[];try{itags=JSON.parse(i.tags||'[]');}catch(e){itags=[];}
-    const hasCat=['Revenue driving','Cost reduction','Risk mitigation'].some(t=>itags.includes(t));
+    let itags=[];try{const r=JSON.parse(i.tags||'[]');itags=Array.isArray(r)?r:[];}catch(e){itags=[];}
+    if(i.tags===null||i.tags==='null'){itags=[];}
+    const hasCat=['Revenue driving','Cost savings','Risk mitigation'].some(t=>itags.includes(t));
     const hasChan=['DTC','Commercial'].some(t=>itags.includes(t));
     if(tc==='missing_category'&&hasCat) return false;
     if(tc==='missing_channel'&&hasChan) return false;
@@ -1203,7 +1206,7 @@ function renderStats(list) {
   const catCounts={};
   CAT_TAGS.forEach(t=>catCounts[t]=0);
   let catUntagged=0;
-  const parseTags=i=>{try{return JSON.parse(i.tags||'[]');}catch(e){return[];}};
+  const parseTags=i=>{if(!i.tags||i.tags==='null')return[];try{const r=JSON.parse(i.tags);return Array.isArray(r)?r:[];}catch(e){return[];}};
   list.forEach(i=>{
     const tags=parseTags(i);
     const found=CAT_TAGS.filter(t=>tags.includes(t));
@@ -1834,15 +1837,15 @@ function renderCompleted() {
     CAT_TAGS.forEach(t=>catCounts[t]=0);
     let catUntagged=0;
     completed.forEach(i=>{
-      let tags=[];try{tags=JSON.parse(i.tags||'[]');}catch(e){}
+      let tags=[];try{const r=JSON.parse(i.tags||'[]');tags=Array.isArray(r)?r:[];}catch(e){}if(!i.tags||i.tags==='null')tags=[];
       const found=CAT_TAGS.filter(t=>tags.includes(t));
       if(found.length===0) catUntagged++;
       else found.forEach(t=>catCounts[t]++);
     });
     let dtcOnly=0,commOnly=0,both=0,neither=0;
     completed.forEach(i=>{
-      const tags=i.tags?JSON.parse(i.tags||'[]'):[];
-      const hasDTC=tags.includes('DTC'), hasComm=tags.includes('Commercial');
+      let tagsDTC=[];try{const r=JSON.parse(i.tags||'[]');tagsDTC=Array.isArray(r)?r:[];}catch(e){}if(!i.tags||i.tags==='null')tagsDTC=[];
+      const hasDTC=tagsDTC.includes('DTC'), hasComm=tagsDTC.includes('Commercial');
       if(hasDTC&&hasComm) both++;
       else if(hasDTC) dtcOnly++;
       else if(hasComm) commOnly++;
