@@ -105,7 +105,6 @@
   /* STATS */
   .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
   .stat-pie { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; }
-  .stat-pie canvas { display: block; margin: 6px auto 0; }
   .stat { background: #DDE4ED; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .75rem 1rem; display: flex; flex-direction: column; justify-content: center; }
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
   .stat-val { font-size: 22px; font-weight: 500; }
@@ -897,8 +896,14 @@ function toggleSgTooltip(e, id) {
   el.classList.toggle('open');
   openTooltip = el.classList.contains('open') ? el : null;
 }
-document.addEventListener('click', function() {
-  if (openTooltip) { openTooltip.classList.remove('open'); openTooltip = null; }
+document.addEventListener('click', function(e) {
+  if (openTooltip && !openTooltip.contains(e.target) && !e.target.classList.contains('sg-tooltip-btn')) {
+    // Only close if clicking another card's ? button — not whitespace
+    if (e.target.classList.contains('sg-tooltip-btn')) {
+      openTooltip.classList.remove('open');
+      openTooltip = null;
+    }
+  }
 });
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 
@@ -1220,49 +1225,34 @@ function renderStats(list) {
     <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Initiatives</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${list.length}</div><div style="font-size:12px;color:var(--text3);margin-top:8px">${totalVotes} votes cast</div></div>
     <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Top score</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${topScore}</div></div>
     <div class="stat-pie">
-      <div class="stat-lbl">Category Tags</div>
-      <canvas id="pie-cat" width="130" height="90"></canvas>
-      <div id="pie-cat-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+      <div class="stat-lbl">Category Tags <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${list.length})</span></div>
+      <div id="bar-cat" style="margin-top:8px"></div>
     </div>
     <div class="stat-pie">
-      <div class="stat-lbl">DTC / Commercial</div>
-      <canvas id="pie-chan" width="130" height="90"></canvas>
-      <div id="pie-chan-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+      <div class="stat-lbl">DTC / Commercial <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${list.length})</span></div>
+      <div id="bar-chan" style="margin-top:8px"></div>
     </div>
   `;
 
-  drawPie('pie-cat',
-    [...CAT_TAGS.map(t=>({label:t.split(' ')[0],val:catCounts[t]})),catUntagged?{label:'Untagged',val:catUntagged}:null].filter(Boolean),
-    ['#97C459','#85b7eb','#f09595','#B4B2A9'],
-    'pie-cat-legend'
+  drawBar('bar-cat',
+    [...CAT_TAGS.map(t=>({label:t.split(' ')[0],val:catCounts[t],color:'#97C459'})).map((d,i)=>({...d,color:['#97C459','#85b7eb','#f09595'][i]||'#B4B2A9'})),catUntagged?{label:'Untagged',val:catUntagged,color:'#B4B2A9'}:null].filter(Boolean),
+    list.length
   );
-  drawPie('pie-chan',
-    [{label:'DTC only',val:dtcOnly},{label:'Commercial only',val:commOnly},{label:'Both',val:both},neither?{label:'Neither',val:neither}:null].filter(Boolean),
-    ['#85b7eb','#a98de0','#5DCAA5','#B4B2A9'],
-    'pie-chan-legend'
+  drawBar('bar-chan',
+    [{label:'DTC only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
+    list.length
   );
 }
 
-function drawPie(canvasId,data,colors,legendId){
-  const canvas=document.getElementById(canvasId);
-  if(!canvas)return;
-  const ctx=canvas.getContext('2d');
-  const total=data.reduce((s,d)=>s+d.val,0);
-  if(total===0){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
-  const cx=canvas.width/2,cy=canvas.height/2,r=Math.min(cx,cy)-4;
-  let angle=-Math.PI/2;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const legendEl=document.getElementById(legendId);
-  let legendHTML='';
-  data.forEach((d,i)=>{
-    if(d.val===0)return;
-    const slice=(d.val/total)*2*Math.PI;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+slice);ctx.closePath();
-    ctx.fillStyle=colors[i%colors.length];ctx.fill();
-    angle+=slice;
-    legendHTML+=`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:6px"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;display:inline-block"></span>${d.label} (${d.val}, ${Math.round(d.val/total*100)}%)</span>`;
-  });
-  if(legendEl)legendEl.innerHTML=legendHTML;
+function drawBar(containerId, data, total) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const maxVal = total || Math.max(...data.map(d=>d.val), 1);
+  el.innerHTML = data.filter(d=>d.val>0).map(d => {
+    const pct = Math.round((d.val/total)*100);
+    const barW = Math.round((d.val/maxVal)*100);
+    return '<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:2px"><span>'+d.label+'</span><span style="color:var(--text3)">'+d.val+' ('+pct+'%)</span></div><div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+barW+'%;background:'+d.color+';border-radius:4px;transition:width .3s"></div></div></div>';
+  }).join('');
 }
 
 
@@ -1339,19 +1329,19 @@ function render() {
             <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">~1 sprint for a single developer</div></div>
             <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Less than a week for a single developer</div></div>
           </div>
-          <div class="sg-popover-cell"><div class="sg-popover-lbl">Importance</div>
-            <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">Will not negatively impact business if not done immediately</div></div>
-            <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">May harm business in a negligible way per quarterly OKRs</div></div>
-            <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Will certainly harm business in a small way per quarterly OKRs</div></div>
-            <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">Will ruin a minor segment, loss of small partner(s), minor reputation damage</div></div>
-            <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Will ruin a major segment, loss of major partner(s), reputation damage</div></div>
-          </div>
           <div class="sg-popover-cell"><div class="sg-popover-lbl">Value ($)</div>
             <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">$0 revenue or cost reduction</div></div>
             <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">Minor — $1 to $1,000/mo</div></div>
             <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Medium — $1,000 to $20,000/mo</div></div>
             <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">High — $20,000 to $100,000/mo</div></div>
             <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Very high — over $100,000/mo</div></div>
+          </div>
+          <div class="sg-popover-cell"><div class="sg-popover-lbl">Importance</div>
+            <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">Will not negatively impact business if not done immediately</div></div>
+            <div class="sg-popover-row"><div class="sg-popover-num">2</div><div class="sg-popover-desc">May harm business in a negligible way per quarterly OKRs</div></div>
+            <div class="sg-popover-row"><div class="sg-popover-num">3</div><div class="sg-popover-desc">Will certainly harm business in a small way per quarterly OKRs</div></div>
+            <div class="sg-popover-row"><div class="sg-popover-num">4</div><div class="sg-popover-desc">Will ruin a minor segment, loss of small partner(s), minor reputation damage</div></div>
+            <div class="sg-popover-row"><div class="sg-popover-num">5</div><div class="sg-popover-desc">Will ruin a major segment, loss of major partner(s), reputation damage</div></div>
           </div>
           <div class="sg-popover-cell"><div class="sg-popover-lbl">Urgency</div>
             <div class="sg-popover-row"><div class="sg-popover-num">1</div><div class="sg-popover-desc">Can be done any time, benefits don't scale with volume</div></div>
@@ -1864,23 +1854,21 @@ function renderCompleted() {
       </div>
       <div class="stat" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;color:var(--text2);margin-bottom:6px">Avg score</div><div style="font-size:32px;font-weight:500;color:var(--text);line-height:1">${completed.length?Math.round(completed.reduce((s,i)=>s+i.score,0)/completed.length):'—'}</div></div>
       <div class="stat-pie">
-        <div class="stat-lbl">Category Tags</div>
-        <canvas id="cpie-cat" width="130" height="90"></canvas>
-        <div id="cpie-cat-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+        <div class="stat-lbl">Category Tags <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${completed.length})</span></div>
+        <div id="cbar-cat" style="margin-top:8px"></div>
       </div>
       <div class="stat-pie">
-        <div class="stat-lbl">DTC / Commercial</div>
-        <canvas id="cpie-chan" width="130" height="90"></canvas>
-        <div id="cpie-chan-legend" style="font-size:10px;color:var(--text2);margin-top:4px;line-height:1.8"></div>
+        <div class="stat-lbl">DTC / Commercial <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${completed.length})</span></div>
+        <div id="cbar-chan" style="margin-top:8px"></div>
       </div>
     `;
-    drawPie('cpie-cat',
-      [...CAT_TAGS.map(t=>({label:t.split(' ')[0],val:catCounts[t]})),catUntagged?{label:'Untagged',val:catUntagged}:null].filter(Boolean),
-      ['#97C459','#85b7eb','#f09595','#B4B2A9'],'cpie-cat-legend'
+    drawBar('cbar-cat',
+      [...CAT_TAGS.map((t,i)=>({label:t.split(' ')[0],val:catCounts[t],color:['#97C459','#85b7eb','#f09595'][i]||'#B4B2A9'})),catUntagged?{label:'Untagged',val:catUntagged,color:'#B4B2A9'}:null].filter(Boolean),
+      completed.length
     );
-    drawPie('cpie-chan',
-      [{label:'DTC only',val:dtcOnly},{label:'Commercial only',val:commOnly},{label:'Both',val:both},neither?{label:'Neither',val:neither}:null].filter(Boolean),
-      ['#85b7eb','#a98de0','#5DCAA5','#B4B2A9'],'cpie-chan-legend'
+    drawBar('cbar-chan',
+      [{label:'DTC only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
+      completed.length
     );
   }
 
