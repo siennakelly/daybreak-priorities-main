@@ -21,26 +21,20 @@ module.exports = async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   try {
-    // Fetch Jira epics using new /search/jql endpoint with nextPageToken pagination
+    // Use GET with URL params instead of POST body
     let epics = [];
     let nextPageToken = null;
 
     do {
-      const body = {
-        jql: 'project = DAY AND issuetype = Epic AND status != "Descoped"',
-        fields: ['summary', 'status', 'key'],
-        maxResults: 100,
-      };
-      if (nextPageToken) body.nextPageToken = nextPageToken;
+      const jql = encodeURIComponent('project = DAY AND issuetype = Epic AND status != "Descoped"');
+      let url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,key&maxResults=100`;
+      if (nextPageToken) url += `&nextPageToken=${encodeURIComponent(nextPageToken)}`;
 
-      const r = await fetch(`${JIRA_BASE}/rest/api/3/search/jql`, {
-        method: 'POST',
+      const r = await fetch(url, {
         headers: {
           Authorization: `Basic ${AUTH}`,
           Accept: 'application/json',
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
       });
 
       if (!r.ok) {
@@ -62,7 +56,6 @@ module.exports = async function handler(req, res) {
     const boardMap = {};
     initiatives.forEach(i => boardMap[i.key] = i.phase);
 
-    // Find and apply mismatches
     const updates = [], skipped = [];
     for (const epic of epics) {
       const jiraStatus = epic.fields.status.name;
