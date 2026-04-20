@@ -1212,7 +1212,10 @@ async function saveInitiative() {
     }
     // Sync phase to Jira if it's a real Jira key and phase changed
     if(/^[A-Z]+-\d+$/.test(key) && prevPhase !== phase) {
+      showToast(`Debug: calling Jira for ${key} prev=${prevPhase} new=${phase}`);
       jiraTransition(key, phase);
+    } else {
+      showToast(`Debug: no Jira call - key=${key} prev=${prevPhase} new=${phase} realKey=${/^[A-Z]+-\d+$/.test(key)}`);
     }
   } else {
     const existing=items.find(i=>i.key===key);if(existing){alert('An initiative with this key already exists.');return;}
