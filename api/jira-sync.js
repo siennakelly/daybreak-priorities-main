@@ -21,12 +21,20 @@ module.exports = async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   try {
-    // Fetch Jira epics
+    // Fetch Jira epics using new /search/jql endpoint
     let epics = [], startAt = 0;
     while (true) {
-      const jql = encodeURIComponent('project = DAY AND issuetype = Epic AND status != "Descoped"');
-      const url = `${JIRA_BASE}/rest/api/3/search?jql=${jql}&fields=summary,status,key&maxResults=100&startAt=${startAt}`;
-      const r = await fetch(url, { headers: { Authorization: `Basic ${AUTH}`, Accept: 'application/json' } });
+      const url = `${JIRA_BASE}/rest/api/3/search/jql`;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Basic ${AUTH}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jql: 'project = DAY AND issuetype = Epic AND status != "Descoped"',
+          fields: ['summary', 'status', 'key'],
+          maxResults: 100,
+          startAt,
+        }),
+      });
       if (!r.ok) { const t = await r.text(); throw new Error(`Jira search failed: ${t}`); }
       const d = await r.json();
       epics = epics.concat(d.issues);
