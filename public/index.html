@@ -471,6 +471,7 @@
       <div class="hdr-right">
         <button class="btn" onclick="openRoadmap()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)">2026 Roadmap</button>
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
+        <button class="btn" onclick="jiraSync()" title="Pull latest statuses from Jira">↻ Jira Sync</button>
         <button class="btn" onclick="openChangelog()">Change Log</button>
         <button class="btn" onclick="openCompleted()">Completed</button>
         <button class="btn" onclick="openSettings()">Settings</button>
@@ -931,6 +932,7 @@ async function jiraSync() {
     const res = await fetch('/api/jira-sync');
     const data = await res.json();
     if (res.ok && data.updates && data.updates.length > 0) {
+      await loadAll();
       showToast(`↻ Jira synced: ${data.updates.length} update${data.updates.length!==1?'s':''}`);
     }
   } catch(e) {
@@ -941,9 +943,7 @@ async function jiraSync() {
 // Poll Jira every 5 minutes
 setInterval(jiraSync, 5 * 60 * 1000);
 
-function showToast(msg){const t=document.getElementById('toast');if(!t){console.warn('Toast element not found');return;}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000);}
-// Test toast on load
-setTimeout(()=>showToast('✓ Toast working'),2000);
+function showToast(msg){const t=document.getElementById('toast');if(!t){console.warn('Toast element not found');return;}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 
 function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
 function netVote(key) { const v=votes[key]||{}; return Object.values(v).reduce((s,x)=>s+x,0); }
@@ -1214,10 +1214,7 @@ async function saveInitiative() {
     }
     // Sync phase to Jira if it's a real Jira key and phase changed
     if(/^[A-Z]+-\d+$/.test(key) && prevPhase !== phase) {
-      showToast(`Debug: calling Jira for ${key} prev=${prevPhase} new=${phase}`);
       jiraTransition(key, phase);
-    } else {
-      showToast(`Debug: no Jira call - key=${key} prev=${prevPhase} new=${phase} realKey=${/^[A-Z]+-\d+$/.test(key)}`);
     }
   } else {
     const existing=items.find(i=>i.key===key);if(existing){alert('An initiative with this key already exists.');return;}
