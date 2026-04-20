@@ -471,7 +471,6 @@
       <div class="hdr-right">
         <button class="btn" onclick="openRoadmap()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)">2026 Roadmap</button>
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
-        <button class="btn" onclick="jiraSync()" title="Pull latest statuses from Jira">↻ Jira Sync</button>
         <button class="btn" onclick="openChangelog()">Change Log</button>
         <button class="btn" onclick="openCompleted()">Completed</button>
         <button class="btn" onclick="openSettings()">Settings</button>
@@ -555,6 +554,12 @@
 
     </div>
 
+    <div class="settings-section" style="border-top:0.5px solid var(--border);padding-top:1rem;margin-top:0.5rem">
+      <h4>Jira sync</h4>
+      <p class="sub" style="font-size:12px;color:var(--text2);margin-bottom:10px">Pull latest epic statuses from Jira into the board.</p>
+      <button class="btn" id="jira-sync-btn" onclick="runJiraSyncFromSettings()">↻ Sync from Jira now</button>
+      <div id="jira-sync-result" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+    </div>
     <div class="settings-btns">
       <button class="btn" onclick="closeSettings()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSettings()">Save &amp; apply</button>
@@ -927,7 +932,37 @@ async function jiraTransition(key, phase) {
   }
 }
 
-async function jiraSync() {
+async function runJiraSyncFromSettings() {
+  const btn = document.getElementById('jira-sync-btn');
+  const result = document.getElementById('jira-sync-result');
+  btn.textContent = '↻ Syncing...';
+  btn.disabled = true;
+  result.textContent = '';
+  try {
+    const res = await fetch('/api/jira-sync');
+    const data = await res.json();
+    if (res.ok) {
+      if (data.updates && data.updates.length > 0) {
+        await loadAll();
+        result.textContent = `✓ ${data.updates.length} initiative${data.updates.length!==1?'s':''} updated from Jira.`;
+        result.style.color = 'var(--green-text)';
+      } else {
+        result.textContent = '✓ Board is already in sync with Jira.';
+        result.style.color = 'var(--text2)';
+      }
+    } else {
+      result.textContent = `⚠ ${data.error}`;
+      result.style.color = 'var(--red-text)';
+    }
+  } catch(e) {
+    result.textContent = `⚠ ${e.message}`;
+    result.style.color = 'var(--red-text)';
+  }
+  btn.textContent = '↻ Sync from Jira now';
+  btn.disabled = false;
+}
+
+
   try {
     const res = await fetch('/api/jira-sync');
     const data = await res.json();
