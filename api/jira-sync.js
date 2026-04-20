@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     let nextPageToken = null;
 
     do {
-      const jql = encodeURIComponent('project = DAY AND issuetype = Epic AND status != "Descoped"');
+      const jql = encodeURIComponent('project = DAY AND status != "Descoped" ORDER BY created DESC');
       let url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,key&maxResults=100`;
       if (nextPageToken) url += `&nextPageToken=${encodeURIComponent(nextPageToken)}`;
 
