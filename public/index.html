@@ -1007,9 +1007,9 @@ function getFiltered() {
     else if(selectedPhases.has('__flagged__')&&selectedPhases.size===1) { mf=flagged.has(i.key); }
     else if(selectedPhases.has('__flagged__')) { mf=flagged.has(i.key)||selectedPhases.has(i.phase); }
     else { mf=selectedPhases.has(i.phase); }
-    const mt=activeTagFilters.size===0||((()=>{const t=i.tags?JSON.parse(i.tags||'[]'):[];return [...activeTagFilters].every(f=>t.includes(f));})());
+    const mt=activeTagFilters.size===0||((()=>{let t=[];try{t=JSON.parse(i.tags||'[]');}catch(e){}return [...activeTagFilters].every(f=>t.includes(f));})());
     const tc=document.getElementById('tag-completeness-f').value;
-    const itags=i.tags?JSON.parse(i.tags||'[]'):[];
+    let itags=[];try{itags=JSON.parse(i.tags||'[]');}catch(e){itags=[];}
     const hasCat=['Revenue driving','Cost reduction','Risk mitigation'].some(t=>itags.includes(t));
     const hasChan=['DTC','Commercial'].some(t=>itags.includes(t));
     if(tc==='missing_category'&&hasCat) return false;
@@ -1203,8 +1203,9 @@ function renderStats(list) {
   const catCounts={};
   CAT_TAGS.forEach(t=>catCounts[t]=0);
   let catUntagged=0;
+  const parseTags=i=>{try{return JSON.parse(i.tags||'[]');}catch(e){return[];}};
   list.forEach(i=>{
-    const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+    const tags=parseTags(i);
     const found=CAT_TAGS.filter(t=>tags.includes(t));
     if(found.length===0) catUntagged++;
     else found.forEach(t=>catCounts[t]++);
@@ -1212,7 +1213,7 @@ function renderStats(list) {
 
   let dtcOnly=0,commOnly=0,both=0,neither=0;
   list.forEach(i=>{
-    const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+    const tags=parseTags(i);
     const hasDTC=tags.includes('DTC');
     const hasComm=tags.includes('Commercial');
     if(hasDTC&&hasComm) both++;
@@ -1833,7 +1834,7 @@ function renderCompleted() {
     CAT_TAGS.forEach(t=>catCounts[t]=0);
     let catUntagged=0;
     completed.forEach(i=>{
-      const tags=i.tags?JSON.parse(i.tags||'[]'):[];
+      let tags=[];try{tags=JSON.parse(i.tags||'[]');}catch(e){}
       const found=CAT_TAGS.filter(t=>tags.includes(t));
       if(found.length===0) catUntagged++;
       else found.forEach(t=>catCounts[t]++);
