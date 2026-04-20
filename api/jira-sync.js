@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
       const d = await r.json();
       // Debug: return raw response on first call
       if (!nextPageToken) {
-        return res.status(200).json({ debug: true, keys: Object.keys(d), total: d.total, issueCount: (d.issues||[]).length, firstIssue: (d.issues||[])[0] || null });
+        return res.status(200).json({ debug: true, url: url, responseKeys: Object.keys(d), isLast: d.isLast, issueCount: (d.issues||[]).length, firstIssue: (d.issues||[])[0] || null, rawSample: JSON.stringify(d).slice(0,500) });
       }
       epics = epics.concat(d.issues || []);
       nextPageToken = d.nextPageToken || null;
