@@ -21,26 +21,37 @@ module.exports = async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   try {
-    // Fetch Jira epics using new /search/jql endpoint
-    let epics = [], startAt = 0;
-    while (true) {
-      const url = `${JIRA_BASE}/rest/api/3/search/jql`;
-      const r = await fetch(url, {
+    // Fetch Jira epics using new /search/jql endpoint with nextPageToken pagination
+    let epics = [];
+    let nextPageToken = null;
+
+    do {
+      const body = {
+        jql: 'project = DAY AND issuetype = Epic AND status != "Descoped"',
+        fields: ['summary', 'status', 'key'],
+        maxResults: 100,
+      };
+      if (nextPageToken) body.nextPageToken = nextPageToken;
+
+      const r = await fetch(`${JIRA_BASE}/rest/api/3/search/jql`, {
         method: 'POST',
-        headers: { Authorization: `Basic ${AUTH}`, Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jql: 'project = DAY AND issuetype = Epic AND status != "Descoped"',
-          fields: ['summary', 'status', 'key'],
-          maxResults: 100,
-          startAt,
-        }),
+        headers: {
+          Authorization: `Basic ${AUTH}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       });
-      if (!r.ok) { const t = await r.text(); throw new Error(`Jira search failed: ${t}`); }
+
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error(`Jira search failed: ${t}`);
+      }
+
       const d = await r.json();
-      epics = epics.concat(d.issues);
-      if (epics.length >= d.total) break;
-      startAt += 100;
-    }
+      epics = epics.concat(d.issues || []);
+      nextPageToken = d.nextPageToken || null;
+    } while (nextPageToken);
 
     // Fetch Supabase initiatives
     const sRes = await fetch(`${SUPABASE_URL}/rest/v1/initiatives?select=key,phase`, {
@@ -63,7 +74,12 @@ module.exports = async function handler(req, res) {
 
       const uRes = await fetch(`${SUPABASE_URL}/rest/v1/initiatives?key=eq.${encodeURIComponent(epic.key)}`, {
         method: 'PATCH',
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
         body: JSON.stringify({ phase: mappedPhase, updated_at: new Date().toISOString() }),
       });
       if (!uRes.ok) { skipped.push({ key: epic.key, reason: `Supabase update failed: ${uRes.status}` }); continue; }
