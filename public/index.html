@@ -1199,6 +1199,7 @@ async function saveInitiative() {
   const tags=JSON.stringify(getModalTags());
   const data={key,title,requestor,phase,effort,value,importance,urgency,score,revenue,notes,tags,start_week:startWeek,duration_weeks:durationWeeks,is_new:!editKey,updated_at:new Date().toISOString()};
   if(editKey){
+    const prevPhase = existingItem ? existingItem.phase : null;
     const oldRank=getRank(editKey);
     await db.from('initiatives').update(data).eq('key',editKey);
     logActivity('initiative_updated',key,title);
@@ -1210,7 +1211,6 @@ async function saveInitiative() {
       showToast(`Rank changed from ${oldRank} to ${newRank}`);
     }
     // Sync phase to Jira if it's a real Jira key and phase changed
-    const prevPhase=existingItem?existingItem.phase:null;
     if(/^[A-Z]+-\d+$/.test(key) && prevPhase !== phase) {
       jiraTransition(key, phase);
     }
