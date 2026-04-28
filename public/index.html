@@ -315,6 +315,15 @@
   .sg-popover-row{display:flex;align-items:flex-start;gap:6px;font-size:11px;margin-bottom:4px}
   .sg-popover-num{background:#DDE4ED;color:#221D35;border-radius:3px;font-weight:600;font-size:11px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .sg-popover-desc{color:var(--text2);line-height:1.4}
+
+  .desc-toolbar{display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+  .desc-btn{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:3px 9px;font-size:12px;cursor:pointer;font-family:var(--font);color:var(--text)}
+  .desc-btn:hover{background:var(--bg3)}
+  .desc-editor{min-height:80px;max-height:200px;overflow-y:auto;border:0.5px solid var(--border2);border-radius:var(--radius);padding:8px 10px;font-size:13px;font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.6;outline:none}
+  .desc-editor:focus{border-color:var(--border3)}
+  .desc-editor[placeholder]:empty:before{content:attr(placeholder);color:var(--text3);pointer-events:none}
+  .desc-editor ul{margin:4px 0;padding-left:20px}
+  .desc-editor li{margin:2px 0}
   .sync-banner{background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:8px 14px;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:center;justify-content:space-between;gap:12px}
   .sync-banner strong{font-weight:500}
   .sync-banner span{color:var(--amber-text);opacity:.8;font-size:12px}
@@ -508,11 +517,11 @@
           <div class="ms-option" onclick="togglePhaseOpt('Development',this)">
             <input type="checkbox" id="popt-dev" /> <label for="popt-dev" style="cursor:pointer">Development</label>
           </div>
-          <div class="ms-option" onclick="togglePhaseOpt('Product Scoping',this)">
-            <input type="checkbox" id="popt-scoping" /> <label for="popt-scoping" style="cursor:pointer">Product Scoping</label>
-          </div>
           <div class="ms-option" onclick="togglePhaseOpt('Requirements Ready, Not Started',this)">
             <input type="checkbox" id="popt-rr" /> <label for="popt-rr" style="cursor:pointer">Requirements Ready, Not Started</label>
+          </div>
+          <div class="ms-option" onclick="togglePhaseOpt('Product Scoping',this)">
+            <input type="checkbox" id="popt-scoping" /> <label for="popt-scoping" style="cursor:pointer">Product Scoping</label>
           </div>
           <div class="ms-option" onclick="togglePhaseOpt('Requirements Not Ready',this)">
             <input type="checkbox" id="popt-rnr" /> <label for="popt-rnr" style="cursor:pointer">Requirements Not Ready</label>
@@ -578,14 +587,25 @@
       <div class="fg"><label>Phase</label>
         <select id="f-phase">
           <option>Ready for Release</option><option>Testing</option><option>Development</option>
-          <option>Product Scoping</option><option>Requirements Ready, Not Started</option>
+          <option>Requirements Ready, Not Started</option><option>Product Scoping</option>
           <option>Requirements Not Ready</option><option>Blocked by Stakeholder</option>
           <option>Completed</option>
         </select>
       </div>
       <div class="fg"><label>Revenue impact ($/mo)</label><input id="f-rev" type="number" placeholder="0" /></div>
       <div class="fg full"><label>Tags — select all that apply</label><div id="modal-tags-container"></div></div>
-      <div class="fg full"><label>Notes / context</label><textarea id="f-notes" placeholder="Value, cost savings, or any other context..."></textarea></div>
+      <div class="fg full">
+        <label>Description</label>
+        <div class="desc-toolbar">
+          <button type="button" class="desc-btn" onclick="descCmd('insertUnorderedList')" title="Bullet list">• List</button>
+          <button type="button" class="desc-btn" onclick="descIndent()" title="Indent">→ Indent</button>
+          <button type="button" class="desc-btn" onclick="descOutdent()" title="Outdent">← Outdent</button>
+          <button type="button" class="desc-btn" onclick="descCmd('bold')" title="Bold"><b>B</b></button>
+          <button type="button" class="desc-btn" onclick="descCmd('italic')" title="Italic"><i>I</i></button>
+        </div>
+        <div id="f-notes" contenteditable="true" class="desc-editor" placeholder="Value, cost savings, or any other context..."></div>
+        <textarea id="f-notes-hidden" style="display:none"></textarea>
+      </div>
       <div class="fg"><label>Start week (2026)</label><input id="f-start-week" type="week" min="2026-W01" max="2026-W52" /></div>
       <div class="fg"><label>Duration (weeks)</label><input id="f-duration" type="number" min="1" max="52" placeholder="e.g. 4" /></div>
     </div>
@@ -979,6 +999,32 @@ async function jiraSync() {
 // Poll Jira every 5 minutes
 setInterval(jiraSync, 5 * 60 * 1000);
 
+
+function descCmd(cmd) {
+  document.getElementById('f-notes').focus();
+  document.execCommand(cmd, false, null);
+}
+function descIndent() {
+  document.getElementById('f-notes').focus();
+  document.execCommand('indent', false, null);
+}
+function descOutdent() {
+  document.getElementById('f-notes').focus();
+  document.execCommand('outdent', false, null);
+}
+function getNotesValue() {
+  return document.getElementById('f-notes').innerHTML || '';
+}
+function setNotesValue(val) {
+  const el = document.getElementById('f-notes');
+  if (!el) return;
+  // Convert plain text with newlines to HTML if no tags present
+  if (val && !val.includes('<')) {
+    el.innerHTML = val.replace(/\n/g, '<br>');
+  } else {
+    el.innerHTML = val || '';
+  }
+}
 function showToast(msg){const t=document.getElementById('toast');if(!t){console.warn('Toast element not found');return;}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 
 function getRank(key){const list=getFiltered();return list.findIndex(i=>i.key===key)+1;}
@@ -1167,7 +1213,7 @@ function openModal(key) {
     document.getElementById('f-title').value=item.title;
     document.getElementById('f-phase').value=item.phase;
     document.getElementById('f-rev').value=item.revenue||0;
-    document.getElementById('f-notes').value=item.notes||'';
+    setNotesValue(item.notes||'');
     document.getElementById('f-start-week').value=item.start_week||'';
     document.getElementById('f-duration').value=item.duration_weeks||'';
     scoringConfig.dims.forEach(d=>{
@@ -1181,7 +1227,7 @@ function openModal(key) {
     document.getElementById('f-title').value='';
     document.getElementById('f-phase').value='Product Scoping';
     document.getElementById('f-rev').value='';
-    document.getElementById('f-notes').value='';
+    setNotesValue('');
     document.getElementById('f-start-week').value='';
     document.getElementById('f-duration').value='';
     scoringConfig.dims.forEach(d=>{
@@ -1225,7 +1271,7 @@ async function saveInitiative() {
   const urgency=dimVals.urgency||3;
   const score=scoringConfig.dims.reduce((s,d)=>s+(((dimVals[d.id]||3)/5)*d.weight),0);
   const revenue=parseInt(document.getElementById('f-rev').value)||0;
-  const rawNotes=document.getElementById('f-notes').value.trim();
+  const rawNotes=document.getElementById('f-notes').innerHTML.trim();
   const phase=document.getElementById('f-phase').value;
   // Stamp completed date if transitioning to Completed
   const existingItem=editKey?items.find(i=>i.key===editKey):null;
