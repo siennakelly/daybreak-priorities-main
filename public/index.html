@@ -1021,11 +1021,12 @@ function getNotesValue() {
 function setNotesValue(val) {
   const el = document.getElementById('f-notes');
   if (!el) return;
-  // Convert plain text with newlines to HTML if no tags present
-  if (val && !val.includes('<')) {
-    el.innerHTML = val.replace(/\n/g, '<br>');
+  // Strip completed stamp before displaying in editor
+  const clean = (val||'').replace(/^\[completed:[^\]]+\]\s*/, '');
+  if (clean && !clean.includes('<')) {
+    el.innerHTML = clean.replace(/\n/g, '<br>');
   } else {
-    el.innerHTML = val || '';
+    el.innerHTML = clean;
   }
 }
 function showToast(msg){const t=document.getElementById('toast');if(!t){console.warn('Toast element not found');return;}t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
@@ -1275,12 +1276,14 @@ async function saveInitiative() {
   const score=scoringConfig.dims.reduce((s,d)=>s+(((dimVals[d.id]||3)/5)*d.weight),0);
   const revenue=parseInt(document.getElementById('f-rev').value)||0;
   const rawNotes=document.getElementById('f-notes').innerHTML.trim();
+  // Strip any existing completed stamp from the raw HTML
+  const cleanNotes=rawNotes.replace(/^\[completed:[^\]]+\]\s*/,'');
   const phase=document.getElementById('f-phase').value;
   // Stamp completed date if transitioning to Completed
   const existingItem=editKey?items.find(i=>i.key===editKey):null;
   const wasCompleted=existingItem&&existingItem.phase==='Completed';
   const completedStamp=phase==='Completed'&&!wasCompleted?`[completed:${new Date().toISOString()}] `:'';
-  const notes=(phase==='Completed'&&!wasCompleted)?completedStamp+rawNotes.replace(/^\[completed:[^\]]+\]\s*/,''):rawNotes;
+  const notes=(phase==='Completed'&&!wasCompleted)?completedStamp+cleanNotes:cleanNotes;
   const swEl=document.getElementById('f-start-week');const startWeek=swEl&&swEl.value?swEl.value:null;
   const durEl=document.getElementById('f-duration');const durationWeeks=durEl&&durEl.value?parseInt(durEl.value)||null:null;
   const tags=JSON.stringify(getModalTags());
