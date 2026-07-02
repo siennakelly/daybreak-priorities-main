@@ -1206,6 +1206,7 @@ function getFiltered() {
   let list=items.filter(i=>{
     if(i.phase==='Completed') return false;
     if(i.is_new) return false; // requested items live in the Requested area, not the main board
+    if(i.rejected) return false;
     const ms=!s||i.title.toLowerCase().includes(s)||i.key.toLowerCase().includes(s)||i.requestor.toLowerCase().includes(s);
     let mf;
     if(selectedPhases.size===0) { mf=true; }
@@ -2138,14 +2139,14 @@ function openRequested(){ document.getElementById('requested-mode').classList.ad
 function closeRequested(){ document.getElementById('requested-mode').classList.remove('active'); setActiveTab('home'); }
 
 function updateRequestedBadge(){
-  const n=items.filter(i=>i.is_new).length;
+  const n=items.filter(i=>i.is_new && !i.rejected).length;
   const b=document.getElementById('req-count-badge');
   if(!b) return;
   if(n){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
 }
 
 function renderRequested(){
-  const reqd=items.filter(i=>i.is_new).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+  const reqd=items.filter(i=>i.is_new && !i.rejected).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
   const el=document.getElementById('requested-list');
   if(!el) return;
   if(!reqd.length){ el.innerHTML='<div class="empty">No requested initiatives. New Jira epics will appear here automatically after a sync.</div>'; return; }
@@ -2165,6 +2166,7 @@ function renderRequested(){
         </div>
         <div style="display:flex;gap:8px;align-items:center;padding:12px 14px;flex-shrink:0;border-left:0.5px solid var(--border)">
           <button class="btn" onclick="openModal('${item.key}')">Edit</button>
+          <button class="btn" style="color:var(--red-text);border-color:var(--red-border)" onclick="rejectRequested('${item.key}')">Reject</button>
           <button class="btn btn-primary" onclick="promoteRequested('${item.key}')">Promote →</button>
         </div>
       </div>
@@ -2185,6 +2187,17 @@ async function promoteRequested(key){
   const idx=items.findIndex(i=>i.key===key); if(idx>-1) items[idx].is_new=false;
   logActivity('initiative_updated', key, 'Promoted from Requested to roadmap');
   showToast(`${key} promoted to the roadmap`);
+  renderRequested(); render();
+}
+
+async function rejectRequested(key){
+  const item=items.find(i=>i.key===key);
+  if(!item) return;
+  if(!confirm(`Reject "${key}"? It will be removed from Requested and won't be re-added by future Jira syncs. It can be restored from the database if needed.`)) return;
+  await db.from('initiatives').update({rejected:true, updated_at:new Date().toISOString()}).eq('key',key);
+  const idx=items.findIndex(i=>i.key===key); if(idx>-1) items[idx].rejected=true;
+  logActivity('initiative_updated', key, 'Rejected from Requested');
+  showToast(`${key} rejected`);
   renderRequested(); render();
 }
 
