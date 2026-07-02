@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // Pull board initiatives (title/notes needed for title sync + completion stamp check)
-    const sRes = await fetch(`${SUPABASE_URL}/rest/v1/initiatives?select=key,phase,notes,title`, { headers: sbHeaders });
+    const sRes = await fetch(`${SUPABASE_URL}/rest/v1/initiatives?select=key,phase,notes,title,is_new,rejected`, { headers: sbHeaders });
     if (!sRes.ok) throw new Error(`Supabase fetch failed: ${sRes.status}`);
     const initiatives = await sRes.json();
 
@@ -45,6 +45,22 @@ module.exports = async function handler(req, res) {
         if (!r.ok) { errors.push({ key, reason: `Jira error ${r.status}` }); continue; }
         const d = await r.json();
         const jiraStatus = d.fields.status.name;
+        const statusCat = d.fields.status.statusCategory ? d.fields.status.statusCategory.key : null;
+
+        // A requested item that has been descoped or closed in Jira should drop out of Requested.
+        if (initiative.is_new && !initiative.rejected && (jiraStatus === 'Descoped' || statusCat === 'done')) {
+          if (!dryRun) {
+            const rmRes = await fetch(`${SUPABASE_URL}/rest/v1/initiatives?key=eq.${encodeURIComponent(key)}`, {
+              method: 'PATCH',
+              headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ rejected: true, updated_at: new Date().toISOString() }),
+            });
+            if (!rmRes.ok) { errors.push({ key, reason: `remove-from-requested failed: ${rmRes.status}` }); continue; }
+          }
+          updates.push({ key, removedFromRequested: jiraStatus });
+          continue;
+        }
+
         const mappedPhase = JIRA_TO_PHASE[jiraStatus];
         if (!mappedPhase) { skipped.push({ key, reason: `no mapping for "${jiraStatus}"` }); continue; }
 
