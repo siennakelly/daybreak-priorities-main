@@ -338,6 +338,8 @@
   #roadmap-mode.active{display:block}
   #completed-mode{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto}
   #completed-mode.active{display:block}
+  #requested-mode{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto}
+  #requested-mode.active{display:block}
   .completed-wrap{max-width:900px;margin:0 auto;padding:2rem 1.25rem 4rem}
   .completed-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--border)}
   .completed-hdr h1{font-size:20px;font-weight:500}
@@ -485,6 +487,7 @@
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
         <button class="btn" onclick="openChangelog()">Change Log</button>
         <button class="btn" onclick="openCompleted()">Completed</button>
+        <button class="btn" onclick="openRequested()">Requested<span id="req-count-badge" style="display:none;margin-left:6px;background:var(--amber-border);color:var(--text);border-radius:999px;font-size:11px;padding:1px 7px;font-weight:600"></span></button>
         <button class="btn" onclick="openSettings()">Settings</button>
 
       </div>
@@ -700,6 +703,19 @@
     </div>
     <div class="stats" id="completed-stats" style="margin-bottom:1rem"></div>
     <div class="list" id="completed-list"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
+<div id="requested-mode">
+  <div class="completed-wrap">
+    <div class="completed-hdr">
+      <div>
+        <h1>Requested Initiatives</h1>
+        <div class="sub">New epics discovered in Jira. Add a requestor and score them, then promote to the roadmap.</div>
+      </div>
+      <button class="completed-exit" onclick="closeRequested()">← Back to board</button>
+    </div>
+    <div class="list" id="requested-list"><div class="loading">Loading...</div></div>
   </div>
 </div>
 
@@ -1106,6 +1122,7 @@ function subscribeRealtime() {
     else if(payload.eventType==='DELETE'){ items=items.filter(x=>x.key!==payload.old.key); }
     populateRequestorFilter();render();
     if(document.getElementById('completed-mode').classList.contains('active')) renderCompleted();
+    if(document.getElementById('requested-mode').classList.contains('active')) renderRequested();
   }).subscribe();
   db.channel('votes-ch').on('postgres_changes',{event:'*',schema:'public',table:'votes'},payload=>{
     const v=payload.new||payload.old;
@@ -1125,6 +1142,7 @@ function getFiltered() {
   const rq=document.getElementById('req-f').value;
   let list=items.filter(i=>{
     if(i.phase==='Completed') return false;
+    if(i.is_new) return false; // requested items live in the Requested area, not the main board
     const ms=!s||i.title.toLowerCase().includes(s)||i.key.toLowerCase().includes(s)||i.requestor.toLowerCase().includes(s);
     let mf;
     if(selectedPhases.size===0) { mf=true; }
@@ -1236,7 +1254,7 @@ function openModal(key) {
     document.getElementById('f-duration').value='';
     scoringConfig.dims.forEach(d=>{
       const el=document.getElementById('f-dim-'+d.id);
-      if(el) el.value=3;
+      if(el) el.value=1;
     });
   }
   // Step 3: update preview AFTER fields are populated
@@ -1287,7 +1305,7 @@ async function saveInitiative() {
   const swEl=document.getElementById('f-start-week');const startWeek=swEl&&swEl.value?swEl.value:null;
   const durEl=document.getElementById('f-duration');const durationWeeks=durEl&&durEl.value?parseInt(durEl.value)||null:null;
   const tags=JSON.stringify(getModalTags());
-  const data={key,title,requestor,phase,effort,value,importance,urgency,score,revenue,notes,tags,start_week:startWeek,duration_weeks:durationWeeks,is_new:!editKey,updated_at:new Date().toISOString()};
+  const data={key,title,requestor,phase,effort,value,importance,urgency,score,revenue,notes,tags,start_week:startWeek,duration_weeks:durationWeeks,is_new:(editKey?(existingItem?existingItem.is_new:false):false),updated_at:new Date().toISOString()};
   if(editKey){
     const prevPhase = existingItem ? existingItem.phase : null;
     const oldRank=getRank(editKey);
@@ -1398,6 +1416,7 @@ function render() {
     return bf-af;
   });
   renderStats(list);
+  updateRequestedBadge();
   // Sync banner
   const flaggedItems=list.filter(i=>flagged.has(i.key));
   const banner=document.getElementById('sync-banner');
@@ -1562,7 +1581,7 @@ function openPres() {
   document.getElementById('pres-mode').classList.add('active');
 }
 function closePres(){document.getElementById('pres-mode').classList.remove('active');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePres();closeRoadmap();closeChangelog();closeCompleted();closeModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePres();closeRoadmap();closeChangelog();closeCompleted();closeRequested();closeModal();}});
 
 function renderModalDims(){
   const c=document.getElementById('modal-dims');if(!c)return;
@@ -1945,7 +1964,7 @@ function closeCompleted() {
 function renderCompleted() {
   const sortEl = document.getElementById('completed-sort');
   const sortVal = sortEl ? sortEl.value : 'newest';
-  let completed = items.filter(i => i.phase === 'Completed');
+  let completed = items.filter(i => i.phase === 'Completed' && !i.is_new);
   completed.sort((a,b) => {
     const da = getCompletedDate(a), db2 = getCompletedDate(b);
     if (sortVal === 'newest') return (db2||0) - (da||0);
@@ -2045,6 +2064,60 @@ async function revertCompleted(key) {
   if (!confirm('Move this initiative back to "Ready for Release"?')) return;
   await db.from('initiatives').update({phase:'Ready for Release', updated_at: new Date().toISOString()}).eq('key', key);
   logActivity('initiative_updated', key, 'Reverted from Completed');
+}
+
+// ── REQUESTED (Jira-discovered, awaiting promotion) ──────────────────────────
+function openRequested(){ document.getElementById('requested-mode').classList.add('active'); renderRequested(); }
+function closeRequested(){ document.getElementById('requested-mode').classList.remove('active'); }
+
+function updateRequestedBadge(){
+  const n=items.filter(i=>i.is_new).length;
+  const b=document.getElementById('req-count-badge');
+  if(!b) return;
+  if(n){ b.style.display='inline-block'; b.textContent=n; } else { b.style.display='none'; }
+}
+
+function renderRequested(){
+  const reqd=items.filter(i=>i.is_new).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+  const el=document.getElementById('requested-list');
+  if(!el) return;
+  if(!reqd.length){ el.innerHTML='<div class="empty">No requested initiatives. New Jira epics will appear here automatically after a sync.</div>'; return; }
+  el.innerHTML=reqd.map(item=>{
+    const pc=phColor(item.phase);
+    const noReq=!item.requestor||!item.requestor.trim();
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="card-main" style="cursor:default">
+        <div class="cbody">
+          <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
+          <div class="cmeta" style="justify-content:flex-start;margin-top:6px">
+            <span class="badge badge-${pc||'slate'}">${item.phase}</span>
+            ${noReq?'<span class="badge badge-red">Needs requestor</span>':`<span class="badge">${item.requestor}</span>`}
+            <span class="badge">Not yet scored</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;padding:12px 14px;flex-shrink:0;border-left:0.5px solid var(--border)">
+          <button class="btn" onclick="openModal('${item.key}')">Edit</button>
+          <button class="btn btn-primary" onclick="promoteRequested('${item.key}')">Promote →</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function promoteRequested(key){
+  const item=items.find(i=>i.key===key);
+  if(!item) return;
+  if(!item.requestor||!item.requestor.trim()){
+    alert('Add a requestor before promoting this to the roadmap. Opening the editor so you can fill it in.');
+    openModal(key);
+    return;
+  }
+  if(!confirm(`Promote "${key}" to the main roadmap?`)) return;
+  await db.from('initiatives').update({is_new:false, updated_at:new Date().toISOString()}).eq('key',key);
+  const idx=items.findIndex(i=>i.key===key); if(idx>-1) items[idx].is_new=false;
+  logActivity('initiative_updated', key, 'Promoted from Requested to roadmap');
+  showToast(`${key} promoted to the roadmap`);
+  renderRequested(); render();
 }
 
 function closeRoadmap() {
