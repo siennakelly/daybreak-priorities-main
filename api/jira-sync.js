@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
     let pageToken = null, guard = 0;
     do {
       const jql = encodeURIComponent('project = DAY AND issuetype = Epic AND statusCategory != Done AND status != "Descoped"');
-      const url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,resolutiondate&maxResults=100${pageToken ? `&nextPageToken=${encodeURIComponent(pageToken)}` : ''}`;
+      const url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,resolutiondate,created&maxResults=100${pageToken ? `&nextPageToken=${encodeURIComponent(pageToken)}` : ''}`;
       const r = await fetch(url, { headers: jiraHeaders });
       if (!r.ok) { errors.push({ discovery: `Jira epic list failed: ${r.status}` }); break; }
       const d = await r.json();
@@ -104,6 +104,7 @@ module.exports = async function handler(req, res) {
           score: 20,                // all-1s under the standard weights; recomputed on edit
           revenue: 0,
           is_new: true,             // lands in the Requested area, off the main board
+          created_at: iss.fields.created ? new Date(iss.fields.created).toISOString() : new Date().toISOString(),
           notes: mappedPhase === 'Completed'
             ? `[completed:${iss.fields.resolutiondate ? new Date(iss.fields.resolutiondate).toISOString() : new Date().toISOString()}] `
             : '',
