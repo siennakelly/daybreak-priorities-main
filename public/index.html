@@ -851,8 +851,8 @@ const ALL_TAGS = [
   {label:"Revenue driving",     color:"#27500a", bg:"#eaf3de", border:"#97c459"},
   {label:"Cost savings",        color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
   {label:"Risk mitigation",     color:"#791f1f", bg:"#fcebeb", border:"#f09595"},
-  {label:"DTC",                 color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
-  {label:"Commercial",          color:"#4a2d8a", bg:"#ede9f6", border:"#a98de0"},
+  {label:"Patient Experience",                 color:"#0c447c", bg:"#e6f1fb", border:"#85b7eb"},
+  {label:"Commercial Growth",          color:"#4a2d8a", bg:"#ede9f6", border:"#a98de0"},
 ];
 
 let activeTagFilters = new Set();
@@ -1218,7 +1218,7 @@ function getFiltered() {
     let itags=[];try{const r=JSON.parse(i.tags||'[]');itags=Array.isArray(r)?r:[];}catch(e){itags=[];}
     if(i.tags===null||i.tags==='null'){itags=[];}
     const hasCat=['Revenue driving','Cost savings','Risk mitigation'].some(t=>itags.includes(t));
-    const hasChan=['DTC','Commercial'].some(t=>itags.includes(t));
+    const hasChan=['Patient Experience','Commercial Growth'].some(t=>itags.includes(t));
     if(tc==='missing_category'&&hasCat) return false;
     if(tc==='missing_channel'&&hasChan) return false;
     if(tc==='missing_any'&&hasCat&&hasChan) return false;
@@ -1428,8 +1428,8 @@ function renderStats(list) {
   let dtcOnly=0,commOnly=0,both=0,neither=0;
   list.forEach(i=>{
     const tags=parseTags(i);
-    const hasDTC=tags.includes('DTC');
-    const hasComm=tags.includes('Commercial');
+    const hasDTC=tags.includes('Patient Experience');
+    const hasComm=tags.includes('Commercial Growth');
     if(hasDTC&&hasComm) both++;
     else if(hasDTC) dtcOnly++;
     else if(hasComm) commOnly++;
@@ -1444,7 +1444,7 @@ function renderStats(list) {
       <div id="bar-cat" style="margin-top:8px"></div>
     </div>
     <div class="stat-pie">
-      <div class="stat-lbl">DTC / Commercial <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${list.length})</span></div>
+      <div class="stat-lbl">Patient Experience / Commercial Growth <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${list.length})</span></div>
       <div id="bar-chan" style="margin-top:8px"></div>
     </div>
   `;
@@ -1454,7 +1454,7 @@ function renderStats(list) {
     list.length
   );
   drawBar('bar-chan',
-    [{label:'DTC only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
+    [{label:'Patient Experience only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. Growth only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
     list.length
   );
 }
@@ -2061,7 +2061,7 @@ function renderCompleted() {
     let dtcOnly=0,commOnly=0,both=0,neither=0;
     completed.forEach(i=>{
       let tagsDTC=[];try{const r=JSON.parse(i.tags||'[]');tagsDTC=Array.isArray(r)?r:[];}catch(e){}if(!i.tags||i.tags==='null')tagsDTC=[];
-      const hasDTC=tagsDTC.includes('DTC'), hasComm=tagsDTC.includes('Commercial');
+      const hasDTC=tagsDTC.includes('Patient Experience'), hasComm=tagsDTC.includes('Commercial Growth');
       if(hasDTC&&hasComm) both++;
       else if(hasDTC) dtcOnly++;
       else if(hasComm) commOnly++;
@@ -2078,7 +2078,7 @@ function renderCompleted() {
         <div id="cbar-cat" style="margin-top:8px"></div>
       </div>
       <div class="stat-pie">
-        <div class="stat-lbl">DTC / Commercial <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${completed.length})</span></div>
+        <div class="stat-lbl">Patient Experience / Commercial Growth <span style="font-size:9px;color:var(--text3);font-weight:400">(of ${completed.length})</span></div>
         <div id="cbar-chan" style="margin-top:8px"></div>
       </div>
     `;
@@ -2087,7 +2087,7 @@ function renderCompleted() {
       completed.length
     );
     drawBar('cbar-chan',
-      [{label:'DTC only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
+      [{label:'Patient Experience only',val:dtcOnly,color:'#85b7eb'},{label:'Comm. Growth only',val:commOnly,color:'#a98de0'},{label:'Both',val:both,color:'#5DCAA5'},neither?{label:'Neither',val:neither,color:'#B4B2A9'}:null].filter(Boolean),
       completed.length
     );
   }
