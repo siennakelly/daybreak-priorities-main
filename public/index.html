@@ -255,7 +255,9 @@
 
   .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:flex-start;justify-content:flex-end;z-index:150;padding:1rem}
   .settings-overlay.open{display:flex}
-  .settings-panel{background:var(--bg);border:0.5px solid var(--border3);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;margin-top:60px}
+  .settings-panel{background:var(--bg);border:0.5px solid var(--border3);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;margin-top:60px;position:relative}
+  .panel-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:22px;line-height:1;color:var(--text3);cursor:pointer;padding:2px 9px;border-radius:var(--radius);font-family:var(--font)}
+  .panel-close:hover{background:var(--bg2);color:var(--text)}
   .settings-panel h3{font-size:16px;font-weight:500;margin-bottom:4px}
   .settings-panel .sub{font-size:13px;color:var(--text2);margin-bottom:1.25rem}
   .settings-section{margin-bottom:1.5rem}
@@ -569,6 +571,7 @@
 <!-- ADD / EDIT MODAL -->
 <div class="settings-overlay" id="settings-overlay">
   <div class="settings-panel">
+    <button class="panel-close" onclick="closeSettings()" aria-label="Close settings">×</button>
     <h3>Scoring settings</h3>
     <p class="sub">Changes sync to your whole team instantly.</p>
     <div class="settings-section">
@@ -1407,8 +1410,8 @@ async function deleteItem(key,e) {
 
 function renderStats(list) {
   const totalVotes=Object.values(votes).reduce((s,v)=>s+Object.values(v).reduce((a,x)=>a+Math.abs(x),0),0);
-  const sorted=[...list].sort((a,b)=>combined(b.key)-combined(a.key));
-  const topScore=sorted.length?Math.round(combined(sorted[0].key)):0;
+  const active=items.filter(i=>i.phase!=='Completed' && !i.is_new && !i.rejected);
+  const topScore=active.length?Math.round(Math.max(...active.map(i=>i.score))):0;
 
   const CAT_TAGS=['Revenue driving','Cost savings','Risk mitigation'];
   const catCounts={};
