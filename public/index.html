@@ -189,7 +189,7 @@
   .add-cmt button:hover { background: var(--bg2); }
 
   /* MODAL */
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 300; padding: 1rem; }
   .overlay.open { display: flex; }
   .modal { background: var(--bg); border: 0.5px solid var(--border3); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
   .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
@@ -494,7 +494,6 @@
     <nav class="tabbar" id="tabbar">
       <button class="tab" data-tab="home" style="--tab:#f0935a" onclick="openHome()">Home</button>
       <button class="tab" data-tab="requested" style="--tab:#FECF00" onclick="openRequested()">Requested <span id="req-count-badge" class="tab-badge" style="display:none"></span></button>
-      <button class="tab" data-tab="roadmap" style="--tab:#97c459" onclick="openRoadmap()">2026 Roadmap</button>
       <button class="tab" data-tab="completed" style="--tab:#5dbdb3" onclick="openCompleted()">Completed</button>
       <button class="tab" data-tab="changelog" style="--tab:#85b7eb" onclick="openChangelog()">Change Log</button>
       <button class="tab" data-tab="settings" style="--tab:#a98de0" onclick="openSettings()">Settings</button>
@@ -2146,21 +2145,22 @@ function updateRequestedBadge(){
 }
 
 function renderRequested(){
-  const reqd=items.filter(i=>i.is_new).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+  const reqd=items.filter(i=>i.is_new).sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
   const el=document.getElementById('requested-list');
   if(!el) return;
   if(!reqd.length){ el.innerHTML='<div class="empty">No requested initiatives. New Jira epics will appear here automatically after a sync.</div>'; return; }
   el.innerHTML=reqd.map(item=>{
     const pc=phColor(item.phase);
-    const noReq=!item.requestor||!item.requestor.trim();
+    const created=item.created_at?new Date(item.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):null;
+    const hasReq=item.requestor&&item.requestor.trim();
     return `<div class="card" style="margin-bottom:8px">
       <div class="card-main" style="cursor:default">
         <div class="cbody">
           <div class="ctitle"><span class="jkey">${item.key}</span>${item.title}</div>
           <div class="cmeta" style="justify-content:flex-start;margin-top:6px">
             <span class="badge badge-${pc||'slate'}">${item.phase}</span>
-            ${noReq?'<span class="badge badge-red">Needs requestor</span>':`<span class="badge">${item.requestor}</span>`}
-            <span class="badge">Not yet scored</span>
+            ${created?`<span class="badge">Created ${created}</span>`:''}
+            ${hasReq?`<span class="badge">${item.requestor}</span>`:''}
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;padding:12px 14px;flex-shrink:0;border-left:0.5px solid var(--border)">
