@@ -87,6 +87,11 @@
   .hdr-left h1 { font-size: 20px; font-weight: 500; }
   .hdr-left .sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
   .hdr-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tabbar{display:flex;gap:2px;align-items:stretch;border-bottom:1px solid var(--border2);margin:0 0 1rem;flex-wrap:wrap}
+  .tab{position:relative;background:none;border:none;border-bottom:3px solid var(--tab,var(--border3));margin-bottom:-1px;font-family:var(--font);font-size:14px;color:var(--text2);cursor:pointer;padding:9px 15px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;opacity:.6;transition:opacity .12s,background .12s}
+  .tab:hover{opacity:1;background:var(--bg2)}
+  .tab.active{opacity:1;font-weight:700;color:var(--text);background:var(--bg2)}
+  .tab-badge{background:var(--tab,var(--amber-border));color:#221D35;border-radius:999px;font-size:11px;padding:1px 7px;font-weight:700}
   .btn { font-size: 13px; padding: 7px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; white-space: nowrap; font-family: var(--font); }
   .btn:hover { background: var(--bg2); }
   .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
@@ -483,15 +488,16 @@
         <h1>Daybreak Product Roadmap</h1>
       </div>
       <div class="hdr-right">
-        <button class="btn" onclick="openRoadmap()" style="background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)">2026 Roadmap</button>
         <button class="btn btn-primary" onclick="openModal()">+ Add initiative</button>
-        <button class="btn" onclick="openChangelog()">Change Log</button>
-        <button class="btn" onclick="openCompleted()">Completed</button>
-        <button class="btn" onclick="openRequested()">Requested<span id="req-count-badge" style="display:none;margin-left:6px;background:var(--amber-border);color:var(--text);border-radius:999px;font-size:11px;padding:1px 7px;font-weight:600"></span></button>
-        <button class="btn" onclick="openSettings()">Settings</button>
-
       </div>
     </div>
+    <nav class="tabbar" id="tabbar">
+      <button class="tab" data-tab="requested" style="--tab:#FECF00" onclick="openRequested()">Requested <span id="req-count-badge" class="tab-badge" style="display:none"></span></button>
+      <button class="tab" data-tab="roadmap" style="--tab:#97c459" onclick="openRoadmap()">2026 Roadmap</button>
+      <button class="tab" data-tab="completed" style="--tab:#5dbdb3" onclick="openCompleted()">Completed</button>
+      <button class="tab" data-tab="changelog" style="--tab:#85b7eb" onclick="openChangelog()">Change Log</button>
+      <button class="tab" data-tab="settings" style="--tab:#a98de0" onclick="openSettings()">Settings</button>
+    </nav>
 
 
 
@@ -754,6 +760,10 @@ let comments = {};
 let expanded = null;
 let editKey = null;
 
+function setActiveTab(name){
+  document.querySelectorAll('#tabbar .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+}
+
 // ── PHASE MULTISELECT ─────────────────────────────────────────────────────────
 let selectedPhases = new Set();
 
@@ -981,9 +991,14 @@ async function runJiraSyncFromSettings() {
     const res = await fetch('/api/jira-sync');
     const data = await res.json();
     if (res.ok) {
-      if (data.updates && data.updates.length > 0) {
+      const upd = (data.updates||[]).length;
+      const disc = data.discovered||0;
+      if (upd>0 || disc>0) {
         await loadAll();
-        result.textContent = `✓ ${data.updates.length} initiative${data.updates.length!==1?'s':''} updated from Jira.`;
+        const parts=[];
+        if(upd>0) parts.push(`${upd} initiative${upd!==1?'s':''} updated`);
+        if(disc>0) parts.push(`${disc} new requested`);
+        result.textContent = `✓ ${parts.join(', ')}.`;
         result.style.color = 'var(--green-text)';
       } else {
         result.textContent = '✓ Board is already in sync with Jira.';
@@ -1006,9 +1021,14 @@ async function jiraSync() {
   try {
     const res = await fetch('/api/jira-sync');
     const data = await res.json();
-    if (res.ok && data.updates && data.updates.length > 0) {
+    const upd = (data.updates||[]).length;
+    const disc = data.discovered||0;
+    if (res.ok && (upd>0 || disc>0)) {
       await loadAll();
-      showToast(`↻ Jira synced: ${data.updates.length} update${data.updates.length!==1?'s':''}`);
+      const parts=[];
+      if(upd>0) parts.push(`${upd} update${upd!==1?'s':''}`);
+      if(disc>0) parts.push(`${disc} new requested`);
+      showToast(`↻ Jira synced: ${parts.join(', ')}`);
     }
   } catch(e) {
     console.warn('Jira sync error:', e.message);
@@ -1589,10 +1609,10 @@ function renderModalDims(){
 }
 function openSettings(){
   renderSettingsDims();
-
+  setActiveTab('settings');
   document.getElementById('settings-overlay').classList.add('open');
 }
-function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
+function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');setActiveTab(null);}
 function renderSettingsDims(){
   document.getElementById('dim-list').innerHTML=scoringConfig.dims.map((d,i)=>`<div class="dim-row"><input type="text" value="${d.label}" oninput="scoringConfig.dims[${i}].label=this.value;updateWeightTotal()" /><input type="number" min="0" max="100" value="${d.weight}" oninput="scoringConfig.dims[${i}].weight=+this.value;updateWeightTotal()" /><span class="pct-lbl">%</span><button class="rm" onclick="scoringConfig.dims.splice(${i},1);renderSettingsDims()">×</button></div>`).join('');
   updateWeightTotal();
@@ -1718,11 +1738,12 @@ async function loadChangelog() {
 
 async function openChangelog() {
   document.getElementById('changelog-mode').classList.add('active');
+  setActiveTab('changelog');
   await loadChangelog();
   populateClUserFilter();
   renderChangelog();
 }
-function closeChangelog(){ document.getElementById('changelog-mode').classList.remove('active'); }
+function closeChangelog(){ document.getElementById('changelog-mode').classList.remove('active'); setActiveTab(null); }
 
 function populateClUserFilter(){
   const users=[...new Set(clLog.map(e=>e.user_name||e.user).filter(Boolean))].sort();
@@ -1940,6 +1961,7 @@ function parseStartWeek(item) {
 function openRoadmap() {
   renderRoadmap();
   document.getElementById('roadmap-mode').classList.add('active');
+  setActiveTab('roadmap');
 }
 
 
@@ -1955,10 +1977,12 @@ function fmtCompletedDate(item) {
 }
 function openCompleted() {
   document.getElementById('completed-mode').classList.add('active');
+  setActiveTab('completed');
   renderCompleted();
 }
 function closeCompleted() {
   document.getElementById('completed-mode').classList.remove('active');
+  setActiveTab(null);
 }
 
 function renderCompleted() {
@@ -2067,8 +2091,8 @@ async function revertCompleted(key) {
 }
 
 // ── REQUESTED (Jira-discovered, awaiting promotion) ──────────────────────────
-function openRequested(){ document.getElementById('requested-mode').classList.add('active'); renderRequested(); }
-function closeRequested(){ document.getElementById('requested-mode').classList.remove('active'); }
+function openRequested(){ document.getElementById('requested-mode').classList.add('active'); setActiveTab('requested'); renderRequested(); }
+function closeRequested(){ document.getElementById('requested-mode').classList.remove('active'); setActiveTab(null); }
 
 function updateRequestedBadge(){
   const n=items.filter(i=>i.is_new).length;
@@ -2122,6 +2146,7 @@ async function promoteRequested(key){
 
 function closeRoadmap() {
   document.getElementById('roadmap-mode').classList.remove('active');
+  setActiveTab(null);
 }
 
 function renderRoadmap() {
