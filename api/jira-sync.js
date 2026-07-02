@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
     const discovered = [];
     let pageToken = null, guard = 0;
     do {
-      const jql = encodeURIComponent('project = DAY AND issuetype = Epic');
+      const jql = encodeURIComponent('project = DAY AND issuetype = Epic AND statusCategory != Done AND status != "Descoped"');
       const url = `${JIRA_BASE}/rest/api/3/search/jql?jql=${jql}&fields=summary,status,resolutiondate&maxResults=100${pageToken ? `&nextPageToken=${encodeURIComponent(pageToken)}` : ''}`;
       const r = await fetch(url, { headers: jiraHeaders });
       if (!r.ok) { errors.push({ discovery: `Jira epic list failed: ${r.status}` }); break; }
